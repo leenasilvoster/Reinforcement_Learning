@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 1 — Review of Probability Concepts | CST497</title>
+<meta name="description" content="Lecture notes on the review of probability concepts for CST497 Reinforcement Learning.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,560;0,9..144,650;1,9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['$$','$$']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+};
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js" id="MathJax-script" async></script>
+
+<style>
+  :root{
+    --paper: #f7f5f0;
+    --paper-raised: #fffdf9;
+    --ink: #1c1a16;
+    --ink-soft: #52493d;
+    --rule: #ddd6c8;
+    --deep: #1f4d4a;      /* pine-teal — structure, headings, rules */
+    --deep-2: #163936;
+    --die: #b8863a;       /* amber — dice pips, accents, definitions */
+    --die-soft: #f1e3c8;
+    --die-soft-2: #e9d3a3;
+    --focus: #1f4d4a;
+    --maxw: 700px;
+    --side-w: 260px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 1.5px 1.5px, rgba(31,77,74,0.055) 1px, transparent 0);
+    background-size: 26px 26px;
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, serif;
+    font-size: 18px;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a{ color: var(--deep); text-decoration-color: var(--die); text-underline-offset: 3px; }
+  a:hover{ color: var(--deep-2); }
+  ::selection{ background: var(--die-soft-2); }
+
+  :focus-visible{ outline: 2px solid var(--focus); outline-offset: 3px; }
+
+  /* ---------- layout shell ---------- */
+  .shell{
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: var(--side-w) 1fr;
+    gap: 56px;
+    padding: 0 32px 90px;
+  }
+
+  /* ---------- header / hero ---------- */
+  header.hero{
+    grid-column: 1 / -1;
+    padding: 68px 4px 46px;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+  }
+  .hero-kicker{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+    margin: 0 0 14px;
+  }
+  .hero-kicker span{ color: var(--die); font-weight: 500; }
+  h1.hero-title{
+    font-family: "Fraunces", serif;
+    font-weight: 560;
+    font-size: clamp(2.3rem, 4.2vw, 3.4rem);
+    line-height: 1.04;
+    margin: 0;
+    color: var(--deep-2);
+    max-width: 11ch;
+  }
+  .hero-sub{
+    margin: 18px 0 0;
+    max-width: 46ch;
+    color: var(--ink-soft);
+    font-size: 1.05rem;
+  }
+  .hero-die{
+    width: 118px; height: 118px;
+    flex-shrink: 0;
+  }
+
+  /* ---------- sidebar / TOC ---------- */
+  nav.toc{
+    padding-top: 42px;
+  }
+  .toc-inner{
+    position: sticky;
+    top: 32px;
+  }
+  .toc-label{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .toc-inner ol{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: toc;
+  }
+  .toc-inner li{
+    counter-increment: toc;
+    margin-bottom: 3px;
+  }
+  .toc-inner a{
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 7px 8px;
+    border-radius: 3px;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.94rem;
+    line-height: 1.3;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .toc-inner a:hover{ background: var(--die-soft); color: var(--deep-2); }
+  .toc-inner a::before{
+    content: counter(toc);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--die);
+    width: 1.4em;
+    flex-shrink: 0;
+  }
+  .toc-foot{
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  /* ---------- mobile toc toggle ---------- */
+  .toc-toggle{ display: none; }
+
+  /* ---------- main content ---------- */
+  main{
+    max-width: var(--maxw);
+    padding-top: 42px;
+  }
+
+  section{
+    padding-bottom: 54px;
+    margin-bottom: 54px;
+    border-bottom: 1px solid var(--rule);
+    scroll-margin-top: 24px;
+  }
+  section:last-of-type{ border-bottom: none; }
+
+  .section-eyebrow{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .section-num{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    color: var(--paper-raised);
+    background: var(--die);
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  h2{
+    font-family: "Fraunces", serif;
+    font-weight: 560;
+    font-size: 1.7rem;
+    color: var(--deep-2);
+    margin: 0 0 22px;
+    line-height: 1.2;
+  }
+  h3{
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-style: italic;
+    font-size: 1.18rem;
+    color: var(--deep);
+    margin: 30px 0 10px;
+  }
+
+  p{ margin: 0 0 16px; color: var(--ink); }
+  strong{ color: var(--deep-2); }
+
+  /* definitions */
+  .def{
+    background: var(--paper-raised);
+    border-left: 3px solid var(--deep);
+    padding: 14px 20px;
+    margin: 18px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .def p:last-child{ margin-bottom: 0; }
+  .def-term{
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-weight: 500;
+    color: var(--deep-2);
+  }
+
+  /* example callouts */
+  .example{
+    margin: 20px 0;
+    padding: 18px 22px;
+    background: var(--die-soft);
+    border-radius: 6px;
+  }
+  .example-label{
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    color: var(--die);
+    margin: 0 0 10px;
+  }
+  .example p:last-child{ margin-bottom: 0; }
+
+  /* boxed results */
+  .result{
+    margin: 22px 0;
+    padding: 18px 22px;
+    border: 1.5px solid var(--deep);
+    border-radius: 6px;
+    background: var(--paper-raised);
+    overflow-x: auto;
+  }
+
+  /* mathjax display spacing */
+  mjx-container[display="true"]{ margin: 14px 0 !important; overflow-x: auto; overflow-y: hidden; }
+
+  /* table */
+  .table-wrap{ overflow-x: auto; margin: 20px 0; }
+  table{
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.96rem;
+  }
+  caption{
+    text-align: left;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  th, td{
+    border: 1px solid var(--rule);
+    padding: 9px 14px;
+    text-align: right;
+  }
+  th:first-child, td:first-child{ text-align: left; }
+  thead th{
+    background: var(--deep);
+    color: var(--paper-raised);
+    font-weight: 500;
+    font-family: "Newsreader", serif;
+  }
+  tbody tr:last-child{ font-weight: 600; background: var(--die-soft); }
+  tbody tr:last-child td:first-child{ color: var(--deep-2); }
+
+  /* diagram */
+  .diagram{
+    display: flex;
+    justify-content: center;
+    margin: 26px 0 10px;
+  }
+  .diagram svg{ max-width: 100%; height: auto; }
+  .diagram-caption{
+    text-align: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  ul.plain{ margin: 0 0 16px; padding-left: 20px; }
+  ul.plain li{ margin-bottom: 6px; }
+
+  footer{
+    grid-column: 1 / -1;
+    padding: 34px 4px 0;
+    border-top: 1px solid var(--rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  @media (max-width: 880px){
+    .shell{ grid-template-columns: 1fr; gap: 0; padding: 0 20px 60px; }
+    header.hero{ grid-template-columns: 1fr; padding: 40px 0 28px; }
+    .hero-die{ display: none; }
+    nav.toc{ padding-top: 0; }
+    .toc-inner{ position: static; padding: 18px 0; }
+    .toc-toggle{
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--paper-raised);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      color: var(--deep-2);
+      cursor: pointer;
+      margin-top: 24px;
+    }
+    .toc-body{ display: none; margin-top: 14px; }
+    .toc-body.open{ display: block; }
+    main{ padding-top: 8px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior: auto; }
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="hero">
+    <div>
+      <p class="hero-kicker">CST497 · Reinforcement Learning · <span>Module 1 of 5</span></p>
+      <h1 class="hero-title">Review of Probability Concepts</h1>
+      <p class="hero-sub">Before an agent can reason about uncertain rewards and stochastic environments, it needs the language of probability. This module rebuilds that foundation — from the axioms through conditional probability — with the worked examples used across the course.</p>
+    </div>
+    <svg class="hero-die" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="6" y="6" width="88" height="88" rx="16" fill="#fffdf9" stroke="#1f4d4a" stroke-width="3"/>
+      <circle cx="28" cy="28" r="6.5" fill="#b8863a"/>
+      <circle cx="72" cy="28" r="6.5" fill="#b8863a"/>
+      <circle cx="28" cy="72" r="6.5" fill="#b8863a"/>
+      <circle cx="72" cy="72" r="6.5" fill="#b8863a"/>
+      <circle cx="50" cy="50" r="6.5" fill="#1f4d4a"/>
+    </svg>
+  </header>
+
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-inner">
+      <button class="toc-toggle" id="tocToggle" aria-expanded="false" aria-controls="tocBody">
+        On this page <span aria-hidden="true">＋</span>
+      </button>
+      <div class="toc-body" id="tocBody">
+        <p class="toc-label">On this page</p>
+        <ol>
+          <li><a href="#intro">Introduction to probability</a></li>
+          <li><a href="#terms">Basic terminology</a></li>
+          <li><a href="#axioms">Axioms of probability</a></li>
+          <li><a href="#compound">Compound probability</a></li>
+          <li><a href="#conditional">Conditional probability</a></li>
+          <li><a href="#tables">Contingency tables</a></li>
+          <li><a href="#venn">Venn diagrams</a></li>
+          <li><a href="#bayes">Bayes' theorem</a></li>
+          <li><a href="#randomvar">Random variables</a></li>
+          <li><a href="#pdf">Probability distribution function</a></li>
+          <li><a href="#expectation">Expectation</a></li>
+          <li><a href="#variance">Variance and standard deviation</a></li>
+          <li><a href="#binomial">Binomial distribution</a></li>
+          <li><a href="#poisson">Poisson distribution</a></li>
+        </ol>
+        <p class="toc-foot">Textbook — Leon-Garcia, <em>Probability, Statistics, and Random Processes for Electrical Engineering</em>, 3rd ed. (Ch. 2–5)</p>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <section id="intro">
+      <div class="section-eyebrow"><span class="section-num">1</span></div>
+      <h2>Introduction to probability</h2>
+      <p>Probability is a numerical measure of the likelihood that an event will occur. It always takes a value between 0 and 1:</p>
+      $$ 0 \leq P(A) \leq 1 $$
+      <p>where \(P(A) = 0\) represents an impossible event and \(P(A) = 1\) represents a certain event.</p>
+      <p>For outcomes that are equally likely,</p>
+      $$ P(A) = \frac{\text{Number of favourable outcomes}}{\text{Total number of possible outcomes}} $$
+
+      <div class="example">
+        <p class="example-label">Example — rolling a fair die</p>
+        <p>For a die numbered 1 through 6,</p>
+        $$ S = \{1, 2, 3, 4, 5, 6\} $$
+        <p>If \(A\) is the event of obtaining a prime number,</p>
+        $$ A = \{2, 3, 5\} $$
+        <p>therefore,</p>
+        $$ P(A) = \frac{3}{6} = \frac{1}{2} = 0.5 $$
+      </div>
+    </section>
+
+    <section id="terms">
+      <div class="section-eyebrow"><span class="section-num">2</span></div>
+      <h2>Basic terminology</h2>
+      <p>Four terms recur throughout the module and are worth fixing precisely before going further.</p>
+
+      <div class="def">
+        <p><span class="def-term">Random experiment.</span> An experiment whose exact outcome cannot be predicted with certainty. <em>Example: rolling a die.</em></p>
+      </div>
+      <div class="def">
+        <p><span class="def-term">Outcome.</span> A single possible result of an experiment. <em>Example: obtaining a 4.</em></p>
+      </div>
+      <div class="def">
+        <p><span class="def-term">Sample space, \(S\).</span> The set of all possible outcomes.</p>
+        $$ S = \{1, 2, 3, 4, 5, 6\} $$
+      </div>
+      <div class="def">
+        <p><span class="def-term">Event.</span> Any subset of the sample space.</p>
+        $$ A = \{\text{prime number}\} = \{2, 3, 5\} $$
+      </div>
+    </section>
+
+    <section id="axioms">
+      <div class="section-eyebrow"><span class="section-num">3</span></div>
+      <h2>Axioms of probability</h2>
+      <p>Three axioms form the mathematical foundation that everything else in the module is built on. For any event \(A\),</p>
+      $$ P(A) \geq 0 $$
+      <p>For the entire sample space,</p>
+      $$ P(S) = 1 $$
+      <p>For mutually exclusive events \(A\) and \(B\) — events that cannot occur together —</p>
+      $$ P(A \cup B) = P(A) + P(B) $$
+    </section>
+
+    <section id="compound">
+      <div class="section-eyebrow"><span class="section-num">4</span></div>
+      <h2>Compound probability</h2>
+      <p>Compound probability describes how two or more events combine. There are two rules to keep straight.</p>
+
+      <h3>The AND rule</h3>
+      <p>For two events occurring together,</p>
+      $$ P(A \cap B) = P(A) \, P(B \mid A) $$
+      <p>If \(A\) and \(B\) are independent — knowing one tells you nothing about the other — this simplifies to</p>
+      $$ P(A \cap B) = P(A) \, P(B) $$
+
+      <h3>The OR rule</h3>
+      <p>For any two events, not necessarily mutually exclusive,</p>
+      <div class="result">
+        $$ P(A \cup B) = P(A) + P(B) - P(A \cap B) $$
+      </div>
+      <p>The intersection is subtracted because outcomes in \(A \cap B\) would otherwise be counted twice — once inside \(P(A)\) and once inside \(P(B)\).</p>
+    </section>
+
+    <section id="conditional">
+      <div class="section-eyebrow"><span class="section-num">5</span></div>
+      <h2>Conditional probability</h2>
+      <p>Conditional probability is the probability of an event occurring given that another event is already known to have occurred:</p>
+      <div class="result">
+        $$ P(A \mid B) = \frac{P(A \cap B)}{P(B)} $$
+      </div>
+      <p>provided \(P(B) > 0\). The formula restricts attention to the world in which \(B\) is true, then asks what fraction of that restricted world also satisfies \(A\).</p>
+
+      <div class="example">
+        <p class="example-label">Example — die, revisited</p>
+        <p>Let</p>
+        $$ A = \{\text{prime}\} = \{2, 3, 5\}, \qquad B = \{\text{odd}\} = \{1, 3, 5\} $$
+        <p>Then</p>
+        $$ A \cap B = \{3, 5\} $$
+        <p>so</p>
+        $$ P(A \mid B) = \frac{P(A \cap B)}{P(B)} = \frac{2/6}{3/6} = \frac{2}{3} $$
+        <p>Restricting to the three odd outcomes \(\{1,3,5\}\), two of them — 3 and 5 — are also prime, which is exactly what the ratio \(\tfrac{2}{3}\) reports.</p>
+      </div>
+    </section>
+
+    <section id="tables">
+      <div class="section-eyebrow"><span class="section-num">6</span></div>
+      <h2>Contingency tables</h2>
+      <p>A contingency table records the joint occurrence of two categorical variables, and it is a natural bridge from single-event conditional probability to the joint and marginal distributions covered later in this module.</p>
+
+      <div class="table-wrap">
+        <table>
+          <caption>Eye colour by sex, n = 111</caption>
+          <thead>
+            <tr><th>Eye colour</th><th>Male</th><th>Female</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Blue</td><td>15</td><td>24</td><td>39</td></tr>
+            <tr><td>Brown</td><td>31</td><td>29</td><td>60</td></tr>
+            <tr><td>Other</td><td>8</td><td>4</td><td>12</td></tr>
+            <tr><td>Total</td><td>54</td><td>57</td><td>111</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Reading probabilities directly off the table:</p>
+      $$ P(\text{Brown}) = \frac{60}{111}, \qquad P(\text{Brown} \cap \text{Female}) = \frac{29}{111} $$
+      <p>and, applying the conditional probability formula from the previous section,</p>
+      $$ P(\text{Brown} \mid \text{Female}) = \frac{29}{57} $$
+    </section>
+
+    <section id="venn">
+      <div class="section-eyebrow"><span class="section-num">7</span></div>
+      <h2>Venn diagrams</h2>
+      <p>Venn diagrams give a visual account of how events relate to one another, and they make the OR rule's subtraction of the overlap easy to see at a glance.</p>
+
+      <div class="diagram">
+        <svg viewBox="0 0 420 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vennTitle">
+          <title id="vennTitle">Venn diagram showing sample space S with overlapping events A and B</title>
+          <rect x="6" y="6" width="408" height="228" rx="10" fill="#fffdf9" stroke="#ddd6c8" stroke-width="1.5"/>
+          <text x="20" y="30" font-family="JetBrains Mono, monospace" font-size="13" fill="#52493d">S</text>
+          <circle cx="175" cy="122" r="82" fill="#1f4d4a" fill-opacity="0.16" stroke="#1f4d4a" stroke-width="2"/>
+          <circle cx="255" cy="122" r="82" fill="#b8863a" fill-opacity="0.22" stroke="#b8863a" stroke-width="2"/>
+          <text x="118" y="70" font-family="Fraunces, serif" font-style="italic" font-size="20" fill="#1f4d4a">A</text>
+          <text x="300" y="70" font-family="Fraunces, serif" font-style="italic" font-size="20" fill="#b8863a">B</text>
+          <text x="207" y="126" font-family="JetBrains Mono, monospace" font-size="12" fill="#1c1a16" text-anchor="middle">A ∩ B</text>
+        </svg>
+      </div>
+      <p class="diagram-caption">The shaded overlap is \(A \cap B\) — counted once in \(P(A \cup B) = P(A) + P(B) - P(A \cap B)\)</p>
+
+      <p>These diagrams are especially useful for reasoning about</p>
+      $$ A \cup B, \qquad A \cap B, \qquad A^{c} $$
+      <p>and for building intuition about conditional probability before moving into the joint, conditional, and marginal distributions that close out Module 1.</p>
+    </section>
+
+    <section id="bayes">
+      <div class="section-eyebrow"><span class="section-num">8</span></div>
+      <h2>Bayes' theorem</h2>
+      <p>Bayes' theorem updates the probability of an event as new evidence becomes available — it inverts a conditional probability you know into one you want:</p>
+      <div class="result">
+        $$ P(B \mid A) = \frac{P(A \mid B)\, P(B)}{P(A)} $$
+      </div>
+      <p>Because it turns "probability of the evidence given the cause" into "probability of the cause given the evidence," it underlies a wide range of inference problems:</p>
+      <ul class="plain">
+        <li>Medical diagnosis — inferring a condition from a test result</li>
+        <li>Spam filtering — inferring spam from the words in a message</li>
+        <li>Machine learning classification — inferring a class label from features</li>
+        <li>Fault detection — inferring a fault from an observed symptom</li>
+      </ul>
+    </section>
+
+    <section id="randomvar">
+      <div class="section-eyebrow"><span class="section-num">9</span></div>
+      <h2>Random variables</h2>
+      <div class="def">
+        <p><span class="def-term">Random variable.</span> A function that assigns a numerical value to each outcome of a random experiment.</p>
+      </div>
+
+      <div class="example">
+        <p class="example-label">Example — tossing a coin twice</p>
+        <p>Let \(X\) be the number of heads obtained:</p>
+        $$ X = \{0, 1, 2\} $$
+      </div>
+
+      <h3>Discrete random variable</h3>
+      <p>Takes a countable set of values.</p>
+      <ul class="plain">
+        <li>Number of customers arriving at a counter</li>
+        <li>Number of defective items in a batch</li>
+      </ul>
+
+      <h3>Continuous random variable</h3>
+      <p>Can take any value within an interval.</p>
+      <ul class="plain">
+        <li>Height</li>
+        <li>Temperature</li>
+        <li>Time</li>
+      </ul>
+    </section>
+
+    <section id="pdf">
+      <div class="section-eyebrow"><span class="section-num">10</span></div>
+      <h2>Probability distribution function</h2>
+      <p>A probability distribution lists every value a discrete random variable can take, alongside the probability of each:</p>
+      $$ P(X = x) $$
+
+      <div class="table-wrap">
+        <table>
+          <caption>Movies watched per week</caption>
+          <thead>
+            <tr><th>X</th><th>P(X)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td>0.1</td></tr>
+            <tr><td>1</td><td>0.5</td></tr>
+            <tr><td>2</td><td>0.4</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Every valid distribution must satisfy</p>
+      <div class="result">
+        $$ \sum P(X) = 1 $$
+      </div>
+    </section>
+
+    <section id="expectation">
+      <div class="section-eyebrow"><span class="section-num">11</span></div>
+      <h2>Expectation</h2>
+      <p>The expectation of a random variable is its long-run average value. For a discrete variable,</p>
+      <div class="result">
+        $$ E(X) = \sum x\, P(x) $$
+      </div>
+
+      <div class="example">
+        <p class="example-label">Example — average movies watched</p>
+        <p>Using the distribution from the previous section,</p>
+        $$ E(X) = 0(0.1) + 1(0.5) + 2(0.4) = 1.3 $$
+      </div>
+    </section>
+
+    <section id="variance">
+      <div class="section-eyebrow"><span class="section-num">12</span></div>
+      <h2>Variance and standard deviation</h2>
+      <p>Variance measures how spread out a random variable's values are around its mean, \(\mu\):</p>
+      $$ Var(X) = E\!\left[(X - \mu)^2\right] $$
+      <p>Standard deviation is simply its square root, expressed in the same units as \(X\):</p>
+      $$ \sigma = \sqrt{Var(X)} $$
+    </section>
+
+    <section id="binomial">
+      <div class="section-eyebrow"><span class="section-num">13</span></div>
+      <h2>Binomial distribution</h2>
+      <p>The binomial distribution applies when an experiment consists of:</p>
+      <ul class="plain">
+        <li>A fixed number of trials</li>
+        <li>Two possible outcomes per trial</li>
+        <li>A constant probability of success across trials</li>
+      </ul>
+      <div class="example">
+        <p class="example-label">Examples</p>
+        <p>Tossing a coin a fixed number of times; a fixed number of pass/fail experiments.</p>
+      </div>
+
+      <div class="result">
+        $$ P(X = x) = \binom{n}{x} p^x q^{\,n-x} $$
+      </div>
+      <p>where</p>
+      $$ q = 1 - p $$
+      <p>with mean and variance</p>
+      $$ \mu = np, \qquad \sigma^2 = npq $$
+    </section>
+
+    <section id="poisson">
+      <div class="section-eyebrow"><span class="section-num">14</span></div>
+      <h2>Poisson distribution</h2>
+      <p>The Poisson distribution is used for counting rare events over a fixed interval of time or space.</p>
+      <div class="example">
+        <p class="example-label">Examples</p>
+        <p>Number of calls received per hour; number of accidents per month; number of defects per batch.</p>
+      </div>
+
+      <div class="result">
+        $$ P(X = x) = \frac{e^{-\lambda}\lambda^{x}}{x!} $$
+      </div>
+      <p>with mean and variance both equal to the rate parameter:</p>
+      $$ \mu = \lambda, \qquad \sigma^2 = \lambda $$
+    </section>
+
+  </main>
+
+  <footer>
+    <span>CST497 — Reinforcement Learning · Module 1 of 5</span>
+    <span>Next — Module 2, Markov Decision Process</span>
+  </footer>
+
+</div>
+
+<script>
+  var toggle = document.getElementById('tocToggle');
+  var body = document.getElementById('tocBody');
+  if (toggle) {
+    toggle.addEventListener('click', function(){
+      var open = body.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+</script>
+
+</body>
+</html>
