@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CST497 Module 2: Markov Decision Processes</title>
+<meta name="description" content="Lecture notes on Markov decision processes for CST497 Reinforcement Learning, Module 2.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27><text y=%27.9em%27 font-size=%2790%27>🧭</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,560;1,9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<style>
+:root{--bg:#f7f5f0;--card:#fffdf9;--ink:#1c1a16;--mut:#52493d;--rule:#ddd6c8;--acc:#1f4d4a;--deep2:#163936;--die:#b8863a;--dietxt:#94682a;--rust:#a4452f;--soft:#f1e3c8;--soft2:#e9d3a3;--dot:rgba(31,77,74,.055);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16140f;--card:#1e1b14;--ink:#ece6d9;--mut:#b5ab95;--rule:#3a342a;--acc:#7fc4bd;--deep2:#a9dad4;--die:#d9a856;--dietxt:#e2b96a;--rust:#d9826a;--soft:#2e2718;--soft2:#4a3d22;--dot:rgba(127,196,189,.07)}}
+:root[data-theme="dark"]{--bg:#16140f;--card:#1e1b14;--ink:#ece6d9;--mut:#b5ab95;--rule:#3a342a;--acc:#7fc4bd;--deep2:#a9dad4;--die:#d9a856;--dietxt:#e2b96a;--rust:#d9826a;--soft:#2e2718;--soft2:#4a3d22;--dot:rgba(127,196,189,.07)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(1.5rem + env(safe-area-inset-top,0px))}
+@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{margin:0;background-color:var(--bg);background-image:radial-gradient(circle at 1.5px 1.5px,var(--dot) 1px,transparent 0);background-size:26px 26px;color:var(--ink);font:18px/1.68 Newsreader,Georgia,serif;-webkit-font-smoothing:antialiased}
+a{color:var(--acc);text-decoration-color:var(--die);text-underline-offset:3px}
+::selection{background:var(--soft2)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+h1,h2,h3,h4,summary{font-family:Fraunces,Georgia,serif}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:56px;padding:0 32px 90px}
+.hero{grid-column:1/-1;padding:68px 4px 46px;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:1fr auto;align-items:end;gap:24px}
+.kicker{font:13px "JetBrains Mono",monospace;letter-spacing:.02em;color:var(--mut);margin:0 0 14px}
+.kicker span{color:var(--dietxt);font-weight:500}
+h1{font-weight:560;font-size:clamp(2.3rem,4.2vw,3.4rem);line-height:1.04;margin:0;color:var(--deep2);max-width:11ch}
+.hero-sub{margin:18px 0 0;max-width:46ch;color:var(--mut);font-size:1.05rem}
+.hero-die{width:118px;height:118px;flex-shrink:0}
+.toc{padding-top:42px}
+.toc-inner{position:sticky;top:calc(32px + env(safe-area-inset-top,0px));max-height:calc(100vh - 64px);overflow-y:auto}
+.toc-label{font:12px "JetBrains Mono",monospace;color:var(--mut);margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:toc}
+.toc li{counter-increment:toc;margin:0 0 3px}
+.toc a{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:3px;color:var(--ink);text-decoration:none;font-size:.94rem;line-height:1.3}
+.toc a:hover,.toc a.on{background:var(--soft);color:var(--deep2)}
+.toc a::before{content:counter(toc);font:.78rem "JetBrains Mono",monospace;color:var(--dietxt);width:1.6em;flex-shrink:0}
+.toc-toggle{display:none}
+main{max-width:700px;padding-top:42px}
+section{padding-bottom:54px;margin-bottom:54px;border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:none}
+.section-eyebrow{margin-bottom:10px}
+.section-num{font:13px "JetBrains Mono",monospace;color:var(--card);background:var(--die);min-width:26px;height:26px;padding:0 6px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center}
+h2{font-weight:560;font-size:1.7rem;color:var(--deep2);margin:0 0 22px;line-height:1.2}
+h3{font-weight:500;font-style:italic;font-size:1.18rem;color:var(--acc);margin:30px 0 10px}
+h4{font-weight:500;font-size:1.02rem;color:var(--acc);margin:22px 0 6px}
+p,ul{margin:0 0 16px}
+li{margin:.25rem 0}
+b,strong{color:var(--deep2)}
+.def{background:var(--card);border-left:3px solid var(--acc);padding:14px 20px;margin:18px 0;border-radius:0 6px 6px 0}
+.def>:last-child{margin-bottom:0}
+.lab{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:500;color:var(--deep2)}
+.note{border-left:3px solid var(--die);padding:2px 0 2px 16px;color:var(--mut)}
+.example{margin:20px 0;padding:18px 22px;background:var(--soft);border-radius:6px}
+.example-label{font:11.5px "JetBrains Mono",monospace;color:var(--dietxt);margin:0 0 10px}
+.example>:last-child{margin-bottom:0}
+.example>h4:nth-child(2){margin-top:6px}
+mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%;margin:14px 0!important}
+.def mjx-container[display="true"]{border:1.5px solid var(--acc);border-radius:6px;background:var(--bg);padding:14px 18px}
+.scroll{overflow-x:auto;margin:20px 0}
+table{border-collapse:collapse;width:100%;font-size:.96rem}
+th,td{border:1px solid var(--rule);padding:9px 14px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--acc);color:var(--card);font-weight:500}
+tr:last-child td{background:var(--soft);font-weight:600}
+.example tr:last-child td{background:var(--soft2)}
+.nt tr:last-child td,.example .nt tr:last-child td{background:none;font-weight:400}
+details{border:1px solid var(--rule);background:var(--card);border-radius:6px;padding:.2rem 1rem;margin:1rem 0}
+summary{cursor:pointer;font-weight:500;padding:.5rem 0;color:var(--deep2)}
+main svg{width:100%;max-width:26rem;display:block;margin:26px auto 10px}
+footer{grid-column:1/-1;padding:34px 4px 0;border-top:1px solid var(--rule);font:12px "JetBrains Mono",monospace;color:var(--mut);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media(max-width:880px){.wrap{display:block;padding:0 20px 60px}.hero{grid-template-columns:1fr;padding:40px 0 28px}.hero-die{display:none}.toc{padding-top:0}.toc-inner{position:static;max-height:none;padding:18px 0}.toc-toggle{display:flex;width:100%;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;font:13px "JetBrains Mono",monospace;color:var(--deep2);cursor:pointer;margin-top:24px}.toc-body{display:none;margin-top:14px}.toc-body.open{display:block}main{padding-top:8px}footer{margin-top:20px}}
+.modnav{margin:0 0 16px;font:13px "JetBrains Mono",monospace}
+.modnav a{text-decoration:none;color:var(--acc)}
+.modnav a:hover{text-decoration:underline;text-decoration-color:var(--die)}
+.pager{display:flex;justify-content:flex-end;margin-top:8px}
+.pager a{display:block;border:1px solid var(--rule);background:var(--card);border-radius:8px;padding:14px 22px;text-decoration:none;text-align:right}
+.pager a:hover{background:var(--soft)}
+.pager small{display:block;font:12px "JetBrains Mono",monospace;color:var(--mut)}
+.pager span{font:500 1.15rem Fraunces,Georgia,serif;color:var(--deep2)}
+.tx th,.tx td{text-align:left;vertical-align:top}
+.gw{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:440px;margin:18px 0}
+.gc{aspect-ratio:1;border:1px solid var(--rule);border-radius:6px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;font:12px "JetBrains Mono",monospace;color:var(--mut)}
+.gc b{font:500 1.9rem/1 Fraunces,Georgia,serif;color:var(--acc)}
+.gc.p{background:var(--soft2)}
+.gc.n{background:color-mix(in srgb,var(--rust) 25%,var(--card))}
+.gc.p b,.gc.n b{color:var(--ink);font-size:1.3rem}
+.gc.w{background:repeating-linear-gradient(45deg,var(--rule) 0 6px,transparent 6px 12px)}
+.gwc{margin:14px 0 4px;font:14px "JetBrains Mono",monospace;color:var(--deep2)}
+input[type=range]{width:100%;max-width:440px;accent-color:var(--acc)}
+.pre{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.pre button{font:13px "JetBrains Mono",monospace;background:var(--card);color:var(--deep2);border:1px solid var(--rule);border-radius:6px;padding:7px 12px;cursor:pointer}
+.pre button:hover{background:var(--soft)}
+#say{color:var(--mut);min-height:3.4em}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero"><div><p class="modnav"><a href="index.html">← Module 1: Review of Probability Concepts</a></p><p class="kicker">CST497 · Reinforcement Learning · <span>Module 2</span></p><h1>Markov Decision Processes</h1><p class="hero-sub">Reinforcement learning is learning by interaction: an agent acts, the world responds with a new state and a reward, and the agent improves. This module introduces the terminology and the formal framework, the finite Markov decision process, that the rest of the course builds on. It uses the conditional distributions and expectations from <a href="index.html">Module 1</a>.</p></div><svg class="hero-die" viewBox="0 0 100 100" fill="none" aria-hidden="true"><rect x="6" y="14" width="88" height="72" rx="10" fill="var(--card)" stroke="var(--acc)" stroke-width="3"/><path d="M28 14V86M50 14V86M72 14V86M6 38H94M6 62H94" stroke="var(--rule)" stroke-width="2"/><rect x="73" y="15" width="20" height="22" fill="var(--die)" opacity=".6"/><rect x="73" y="39" width="20" height="22" fill="var(--rust)" opacity=".6"/><circle cx="17" cy="74" r="6.5" fill="var(--acc)"/></svg></header>
+<nav class="toc" aria-label="Table of contents"><div class="toc-inner"><button class="toc-toggle" id="tocToggle" aria-expanded="false" aria-controls="tocBody">On this page <span aria-hidden="true">＋</span></button><div class="toc-body" id="tocBody"><p class="toc-label">On this page</p><ol>
+<li><a href="#s1">RL terminology</a></li>
+<li><a href="#s2">Examples of RL</a></li>
+<li><a href="#s3">Elements of RL</a></li>
+<li><a href="#s4">Scope and limitations</a></li>
+<li><a href="#s5">The agent–environment interface</a></li>
+<li><a href="#s6">Goals and rewards</a></li>
+<li><a href="#s7">Returns and episodes</a></li>
+<li><a href="#s8">Policies and value functions</a></li>
+<li><a href="#s9">Optimal policies and value functions</a></li>
+<li><a href="#gridlab">Gridworld lab</a></li>
+<li><a href="#check">Self-check</a></li>
+</ol></div></div></nav>
+<main>
+
+<section id="s1"><div class="section-eyebrow"><span class="section-num">1</span></div><h2>Reinforcement learning terminology</h2>
+<div class="def"><span class="lab">Reinforcement learning (RL).</span> The science of decision making. An <b>agent</b> senses an <b>environment</b>, takes <b>actions</b> that change its <b>state</b>, and receives <b>rewards</b>. It learns strategies that maximize long-term reward, even when it starts without a complete model of the environment.</div>
+<p>RL suits any problem where sequences of decisions matter: chess, mazes, path planning, robot arms, sweeper robots. Formally, it addresses a goal-directed agent interacting with an uncertain environment and using its experience to improve over time, as a chess player refines the intuition used to evaluate positions.</p>
+<div class="scroll"><table class="nt tx"><thead><tr><th>Paradigm<th>Learns from<th>Goal</tr></thead><tbody><tr><td>Supervised<td>Labelled examples from an external supervisor<td>Predict labels, classify</tr><tr><td>Unsupervised<td>Unlabelled data<td>Find hidden structure, e.g. K-means</tr><tr><td>Reinforcement<td>Interaction and a reward signal<td>Maximize cumulative reward</tr></tbody></table></div>
+<h3>Main characteristics</h3>
+<ul><li>No expert supervision during training.</li><li>The environment is usually stochastic, and the model of it can be incomplete.</li><li>Feedback can be delayed or partial: an action affects the next situation and all later rewards.</li><li><b>Exploration versus exploitation.</b> The agent must try a variety of actions, yet favor those that have worked. This trade-off arises only in RL.</li></ul>
+<h3>Three historical threads</h3>
+<p>RL merges trial-and-error learning (from the psychology of animal learning), optimal control solved with <b>dynamic programming</b> (Bellman, 1950s: break a problem into subproblems, solve each once, store the results), and temporal-difference learning.</p></section>
+
+<section id="s2"><div class="section-eyebrow"><span class="section-num">2</span></div><h2>Examples of RL</h2>
+<p>Every RL problem can be framed by naming five things: environment, agent, state, action, reward.</p>
+<div class="scroll"><table class="nt tx"><thead><tr><th>Example<th>Environment<th>Agent<th>State<th>Action<th>Reward</tr></thead><tbody>
+<tr><td>Go (AlphaGo)<td>Board and opponent<td>Player<td>Board configuration<td>Place a stone<td>Win or lose</tr>
+<tr><td>Data-centre cooling<td>All data centres<td>Controller<td>Energy use at time \(t\)<td>Move load, switch on or off<td>Less energy used</tr>
+<tr><td>Trading<td>Traders and shares<td>Trader<td>Status of the shares<td>Buy, sell, hold<td>Profit</tr>
+<tr><td>Healthcare<td>Patients and treatments<td>Recommender<td>Patient's health<td>Advise a medicine<td>Health improvement</tr>
+<tr><td>Robot grasping<td>Objects and workspace<td>Robot<td>Joint positions, object pose<td>Arm movements<td>Left to the designer</tr></tbody></table></div>
+<p>AlphaGo beat Lee Sedol in a five-game match in March 2016. DeepMind's controller cut the energy used for cooling Google data centres by up to 40 percent. Supervised learning can predict a stock price, but it does not decide whether to hold, buy or sell; an RL agent does. Other examples: motion planning around obstacles and balancing an object (feedback control).</p></section>
+
+<section id="s3"><div class="section-eyebrow"><span class="section-num">3</span></div><h2>Elements of RL</h2>
+<p>An RL system has four main elements.</p>
+<h3>1. Policy</h3>
+<p>What action to take in the current state. It may be a lookup table, a search process, or <b>stochastic</b>, giving a probability to each action.</p>
+<h3>2. Reward signal</h3>
+<p>The immediate, short-term outcome of an action, positive or negative. It defines the goal: maximize the total reward received over the long run.</p>
+<h3>3. Value function</h3>
+<p>The total reward an agent can expect to accumulate from a state onward. Rewards say what is good now; values say what is good in the long run. A state with a low immediate reward can have a high value because it leads to high-reward states. Without rewards there would be no values, and values are estimated only to obtain more reward. The agent should choose actions that bring the highest <em>value</em>, not the highest reward, though values are much harder to determine.</p>
+<h3>4. Model of the environment</h3>
+<p>It mimics the environment: given a state and action, it predicts the next state and reward. Models are used for <b>planning</b>. Methods that use one are <b>model-based</b>; simpler <b>model-free</b> methods learn by trial and error.</p></section>
+
+<section id="s4"><div class="section-eyebrow"><span class="section-num">4</span></div><h2>Scope and limitations</h2>
+<h3>Scope</h3>
+<p>RL is used in computer science, engineering, mathematics, economics, neuroscience and psychology, in applications from resource allocation in operating systems to unmanned helicopter control. It is especially useful in robotics, where the best action in each state is not known in advance.</p>
+<p>The simplest algorithms are <b>tabular</b>: the state and action spaces are small enough for value functions to be stored as tables, so exact solutions are often possible. There are three classes:</p>
+<div class="scroll"><table class="nt tx"><thead><tr><th>Method<th>Needs a model?<th>Trade-off</tr></thead><tbody><tr><td>Dynamic programming<td>Yes, complete and accurate<td>Well developed mathematically</tr><tr><td>Monte Carlo<td>No<td>Conceptually simple, but waits for an episode to end</tr><tr><td>Temporal-difference<td>No<td>Fully incremental, but harder to analyze</tr></tbody></table></div>
+<h3>Limitations</h3>
+<ul><li>Learning by trial and error can need very many interactions.</li><li>Rewards are hard to design: a poor choice teaches the wrong behavior, and some tasks (grasping) have no obvious reward.</li><li>Tables become impossible when the number of states is very large, so approximation is needed.</li><li>Delayed rewards make it hard to decide which earlier action deserves credit.</li><li>Dynamic programming requires a model, which is often unavailable.</li></ul>
+<p class="note">The lecture slides do not list limitations; the list above gives the commonly cited ones.</p></section>
+
+<section id="s5"><div class="section-eyebrow"><span class="section-num">5</span></div><h2>The agent–environment interface</h2>
+<p>A <b>Markov decision process</b> (MDP) formalizes the interaction. Time advances in steps \(t=0,1,2,\dots\). At each step the agent observes the state \(S_t\), chooses an action \(A_t\), and the environment answers with a reward \(R_{t+1}\) and a next state \(S_{t+1}\). The interaction produces a trajectory</p>
+$$S_0,\,A_0,\,R_1,\,S_1,\,A_1,\,R_2,\,S_2,\dots$$
+<svg viewBox="0 0 360 200" role="img" aria-label="Agent sends action A_t to the environment; the environment returns state S_t+1 and reward R_t+1" style="max-width:26rem"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--acc)"/></marker></defs>
+<rect x="15" y="60" width="100" height="60" rx="8" fill="var(--card)" stroke="var(--acc)" stroke-width="2"/><text x="65" y="95" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">Agent</text>
+<rect x="245" y="60" width="100" height="60" rx="8" fill="var(--card)" stroke="var(--die)" stroke-width="2"/><text x="295" y="95" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)">Environment</text>
+<path d="M115 80H245" stroke="var(--acc)" stroke-width="2" fill="none" marker-end="url(#ah)"/><text x="180" y="72" text-anchor="middle" font-size="13" fill="var(--ink)">action A</text>
+<path d="M295 120V170H65V120" stroke="var(--acc)" stroke-width="2" fill="none" marker-end="url(#ah)"/><text x="180" y="163" text-anchor="middle" font-size="13" fill="var(--ink)">state S′, reward R</text></svg>
+<div class="def"><span class="lab">Dynamics of a finite MDP.</span> The sets of states, actions and rewards are finite, and the environment is described by
+$$p(s',r\mid s,a)=P(S_{t+1}=s',\,R_{t+1}=r\mid S_t=s,\,A_t=a),\qquad \sum_{s',r}p(s',r\mid s,a)=1$$
+</div>
+<p>This is a conditional distribution of the kind reviewed in Module 1. The <b>Markov property</b> says the next state and reward depend only on the current state and action, not on the earlier history. The state must therefore contain whatever information from the past matters. The transition probability of the slides is obtained by summing over rewards: \(p(s'\mid s,a)=\sum_r p(s',r\mid s,a)\).</p></section>
+
+<section id="s6"><div class="section-eyebrow"><span class="section-num">6</span></div><h2>Goals and rewards</h2>
+<div class="def"><span class="lab">Reward hypothesis.</span> Every goal can be expressed as the maximization of the expected cumulative sum of a scalar reward signal.</div>
+<p>The reward tells the agent <em>what</em> to achieve, not <em>how</em>. Reward winning a game, not capturing pieces, or the agent may learn to hoard pieces and lose. Rewards define good and bad events: reaching a goal earns a positive reward, a hazard a negative one, and an ordinary step can carry a small cost that encourages finishing quickly, as in the gridworld below.</p></section>
+
+<section id="s7"><div class="section-eyebrow"><span class="section-num">7</span></div><h2>Returns and episodes</h2>
+<p>An <b>episode</b> is the whole sequence of states and actions from a start until a terminal state at time \(T\). Tasks that never end are <b>continuing</b>. The agent maximizes the expected <b>return</b>, the discounted sum of future rewards:</p>
+<div class="def"><span class="lab">Return.</span>
+$$G_t=R_{t+1}+\gamma R_{t+2}+\gamma^2R_{t+3}+\cdots=\sum_{k=0}^{\infty}\gamma^kR_{t+k+1},\qquad G_t=R_{t+1}+\gamma G_{t+1}$$
+The <b>discount factor</b> \(0\le\gamma\le1\) makes distant rewards count less. A small \(\gamma\) is short-sighted, a \(\gamma\) near 1 far-sighted. For continuing tasks \(\gamma\lt1\) keeps the sum finite.</div>
+<p class="note">The lecture slides index rewards from \(r_t\); here they start at \(R_{t+1}\). The idea is identical.</p>
+<div class="example"><p class="example-label">Example — computing a return</p>
+<p>With \(\gamma=0.5\), suppose the rewards after time \(t\) are \(R_{t+1}=1\), \(R_{t+2}=0\), \(R_{t+3}=2\), and the episode then ends.</p>
+$$G_t=1+0.5(0)+0.5^2(2)=1.5$$
+<p>Check with the recursion: \(G_{t+1}=0+0.5(2)=1\), so \(G_t=1+0.5(1)=1.5\).</p></div></section>
+
+<section id="s8"><div class="section-eyebrow"><span class="section-num">8</span></div><h2>Policies and value functions</h2>
+<div class="def"><span class="lab">Policy.</span> A mapping from states to actions, deterministic or stochastic:
+$$a=\pi(s)\qquad\text{or}\qquad\pi(a\mid s)=P(A_t=a\mid S_t=s)$$</div>
+<p>A stochastic policy is a conditional PMF over actions. Value functions measure how good it is to follow a policy \(\pi\):</p>
+<div class="def"><span class="lab">State-value and action-value functions.</span>
+$$v_\pi(s)=E_\pi[G_t\mid S_t=s]\qquad q_\pi(s,a)=E_\pi[G_t\mid S_t=s,\,A_t=a]$$
+where \(q_\pi\) is the expected return after taking \(a\) in \(s\) and following \(\pi\) afterwards (the Q-value). They are related by \(v_\pi(s)=\sum_a\pi(a\mid s)\,q_\pi(s,a)\).</div>
+<p>Values satisfy the <b>Bellman expectation equation</b>, which expresses the value of a state through the values of its successors:</p>
+$$v_\pi(s)=\sum_a\pi(a\mid s)\sum_{s',r}p(s',r\mid s,a)\big[r+\gamma\,v_\pi(s')\big]$$
+<div class="example"><p class="example-label">Example — estimating a value by averaging</p>
+<p>Because \(v_\pi(s)\) is an expectation, it can be estimated by running \(\pi\) from state \(s\) several times and averaging the returns: \(v_\pi(s)\approx\frac1N\sum_i G_i\). If three episodes from \(s\) give returns 4, 6 and 5, then \(v_\pi(s)\approx\frac{4+6+5}{3}=5\).</p></div>
+<p>Two tasks follow. <b>Prediction</b> has a fixed policy and evaluates it by estimating \(v_\pi\) or \(q_\pi\): "evaluate the future". <b>Control</b> does not know the policy and searches for the one that collects the most reward: "optimize the future".</p></section>
+
+<section id="s9"><div class="section-eyebrow"><span class="section-num">9</span></div><h2>Optimal policies and value functions</h2>
+<div class="def"><span class="lab">Optimality.</span> A policy \(\pi_*\) is optimal if its value is at least that of every other policy in every state. All optimal policies share the same optimal value functions:
+$$v_*(s)=\max_\pi v_\pi(s)\qquad q_*(s,a)=\max_\pi q_\pi(s,a)$$</div>
+<p>Knowing \(q_*\) makes acting optimally easy: in each state choose the action with the highest Q-value,</p>
+$$\pi_*(s)=\arg\max_a q_*(s,a)$$
+<p>The optimal values satisfy the <b>Bellman optimality equation</b>, which dynamic programming solves when the model is known:</p>
+$$v_*(s)=\max_a\sum_{s',r}p(s',r\mid s,a)\big[r+\gamma\,v_*(s')\big]$$
+<p>The optimal policy depends on the rewards. The lab below shows the same grid producing very different optimal behavior as the step reward changes.</p></section>
+
+<section id="gridlab"><div class="section-eyebrow"><span class="section-num">10</span></div><h2>Gridworld lab</h2>
+<p>This is the motion-planning example from the lecture: a 4×3 grid with a wall, and terminal states worth +1 and −1. A move goes in the intended direction with probability 0.8 and slips to each side with probability 0.1. Every non-terminal step earns the reward \(R(s)\), which you can change. The optimal policy is computed by value iteration with \(\gamma=1\).</p>
+<div class="gw" id="gw" role="img" aria-label="Optimal policy on the 4 by 3 grid"></div>
+<div class="gwc"><label for="rs">Step reward R(s) = <span id="rv"></span></label></div>
+<input id="rs" type="range" min="-2" max="0.2" step="0.01" value="-0.04">
+<div class="pre"><button data-r="-2">−2</button><button data-r="-0.2">−0.2</button><button data-r="-0.04">−0.04</button><button data-r="-0.01">−0.01</button><button data-r="0.1">+0.1</button></div>
+<p id="say" aria-live="polite"></p>
+<script>
+(function(){
+var D={U:[-1,0],D:[1,0],L:[0,-1],R:[0,1]},P={U:"LR",D:"LR",L:"UD",R:"UD"},AR={U:"↑",D:"↓",L:"←",R:"→"},V,cells=[];
+function wall(r,c){return r==1&&c==1}
+function term(r,c){return c==3&&r<2}
+function mv(r,c,a){var nr=r+D[a][0],nc=c+D[a][1];return(nr<0||nr>2||nc<0||nc>3||wall(nr,nc))?[r,c]:[nr,nc]}
+function q(r,c,a){var s=0;[[a,.8],[P[a][0],.1],[P[a][1],.1]].forEach(function(x){var n=mv(r,c,x[0]);s+=x[1]*V[n[0]][n[1]]});return s}
+function solve(R){V=[[0,0,0,1],[0,0,0,-1],[0,0,0,0]];var A="UDLR".split(""),r,c;
+for(var i=0;i<300;i++)for(r=0;r<3;r++)for(c=0;c<4;c++){if(wall(r,c)||term(r,c))continue;var b=-1e9;A.forEach(function(a){b=Math.max(b,q(r,c,a))});V[r][c]=R+b}
+var pol=[];for(r=0;r<3;r++){pol[r]=[];for(c=0;c<4;c++){if(wall(r,c)||term(r,c))continue;var best="U",bv=-1e9;A.forEach(function(a){var v=q(r,c,a);if(v>bv+1e-9){bv=v;best=a}});pol[r][c]=best}}return pol}
+function regime(R){
+if(R<-1.6284)return"Below −1.6284: the agent ends the episode as fast as possible, even by entering −1.";
+if(R>-0.4278&&R<-0.085)return"Between −0.4278 and −0.0850: the agent risks passing next to −1 to reach +1 quickly.";
+if(R>-0.0221&&R<0)return"Between −0.0221 and 0: no risks, the agent avoids −1 at all cost by taking the long way round.";
+if(R>=0)return"R(s) ≥ 0: the agent avoids terminating, since staying pays.";
+return"Between the regimes named on the slide: the policy mixes the behaviors above.";}
+var g=document.getElementById("gw"),s=document.getElementById("rs"),rv=document.getElementById("rv"),say=document.getElementById("say");
+for(var i=0;i<12;i++){var d=document.createElement("div");d.className="gc";g.appendChild(d);cells.push(d)}
+function draw(){var R=parseFloat(s.value),pol=solve(R);rv.textContent=R.toFixed(2);
+for(var r=0;r<3;r++)for(var c=0;c<4;c++){var e=cells[r*4+c];e.className="gc";e.textContent="";
+if(wall(r,c)){e.className="gc w";continue}
+if(term(r,c)){e.className="gc "+(r==0?"p":"n");var t=document.createElement("b");t.textContent=r==0?"+1":"−1";e.appendChild(t);continue}
+var b=document.createElement("b");b.textContent=AR[pol[r][c]];var sm=document.createElement("span");sm.textContent="V = "+V[r][c].toFixed(2);e.appendChild(b);e.appendChild(sm)}
+say.textContent=regime(R)}
+s.addEventListener("input",draw);
+document.querySelectorAll("[data-r]").forEach(function(b){b.addEventListener("click",function(){s.value=b.dataset.r;draw()})});
+draw();
+})();
+</script></section>
+
+<section id="check"><div class="section-eyebrow"><span class="section-num">11</span></div><h2>Self-check</h2>
+<details><summary>Why choose the action with the highest value rather than the highest reward?</summary><p>Reward is immediate, while value is the expected total reward from that point on. A low-reward step can lead to high-reward states.</p></details>
+<details><summary>What does the Markov property say?</summary><p>The next state and reward depend only on the current state and action, not on how the agent arrived there.</p></details>
+<details><summary>What does the discount factor \(\gamma\) control?</summary><p>How much future rewards count. Small \(\gamma\) is short-sighted, \(\gamma\) near 1 is far-sighted, and \(\gamma\lt1\) keeps returns finite in continuing tasks.</p></details>
+<details><summary>Prediction versus control?</summary><p>Prediction estimates the value of a given policy. Control finds the optimal policy.</p></details>
+<details><summary>Given \(q_*\), how do you act optimally?</summary><p>In each state choose the action with the highest Q-value: \(\pi_*(s)=\arg\max_a q_*(s,a)\).</p></details></section>
+
+<nav class="pager" aria-label="Next module"><a href="module3.html"><small>Next module</small><span>Module 3 →</span></a></nav>
+</main>
+<footer><span>CST497 — Reinforcement Learning · Module 2</span><span><a href="index.html">← Module 1</a> · <a href="module3.html">Module 3 →</a></span></footer>
+</div>
+<script>
+const ls=[...document.querySelectorAll('nav a')];
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)ls.forEach(a=>a.classList.toggle('on',a.hash==='#'+e.target.id))}),{rootMargin:'-15% 0px -75% 0px'});
+document.querySelectorAll('section[id]').forEach(s=>io.observe(s));
+var tg=document.getElementById('tocToggle'),tb=document.getElementById('tocBody');if(tg)tg.addEventListener('click',function(){var o=tb.classList.toggle('open');tg.setAttribute('aria-expanded',o?'true':'false')});
+</script>
+</body>
+</html>
