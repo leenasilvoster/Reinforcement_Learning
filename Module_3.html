@@ -1,187 +1,286 @@
-← Module 2: Markov Decision Processes
-CST497 · Reinforcement Learning · Module 4
-Temporal-Difference Methods
-Model-free prediction and control: how an agent learns value estimates from raw experience, updating after every step by bootstrapping from its own predictions.
-On this page
-Families of RL
-Model-free prediction and control
-TD learning and key terms
-TD(0) prediction
-SARSA
-Q-learning
-Expected SARSA
-n-step bootstrapping
-n-step SARSA
-Off-policy and importance sampling
-n-step tree backup
-Trade-offs and summary
-Update-rule lab
-Self-check
-1
-Families of RL
-In reinforcement learning (RL) an agent learns to decide by interacting with an environment and receiving rewards or penalties. The goal is a policy that maximizes expected cumulative reward.
-Model-based RL
-The agent uses a model of the environment (state transitions and expected rewards) to predict what follows an action, then plans and improves its policy. The model may be given or learned. Example: a robot learns how its movements change its position and plans a route.
-Model-free RL
-The agent learns directly from experience, with no model of the environment. TD learning is a core technique here. Example: a game agent learns which moves work by playing many games.
-Three approaches in model-free RL
-Value-based: estimate values of states or state-action pairs and act on them (Q-learning, SARSA, Expected SARSA).
-Policy-based: learn the policy directly by adjusting its parameters (REINFORCE).
-Actor-critic: an actor chooses actions while a critic evaluates them and gives feedback (A2C).
-Feature	Model-free	Model-based
-Idea	Learns from experience	Uses a model to predict and plan
-Model	Not required	Known or learned
-Sample efficiency	Often needs more interaction	Often fewer, if the model is accurate
-Computation	Less planning	More planning, extra complexity
-Adaptability	Adapts through new experience	Can replan if the model captures change
-Examples	SARSA, Q-learning, DQN	Dyna-Q, planning
-Model-free methods still use observed rewards and learned predictions. What they skip is an explicit model of the dynamics.
-2
-Model-free prediction and control
-Model-free control. Learning a policy that maximizes expected cumulative reward, by trial and error, without an explicit model of transition and reward dynamics. It balances exploration of new actions with exploitation of known good ones.
-Prediction	Control
-Evaluates a given policy	Learns or improves a policy
-Estimates \(V^\pi(s)\) or \(Q^\pi(s,a)\)	Seeks an optimal or improved policy
-How good is this state or action under the policy?	Which action should the agent choose?
-Example: TD(0)	Examples: SARSA, Q-learning
-A model-based agent knows \(p(s',r\mid s,a)\). A model-free agent only sees sampled transitions \((S_t,A_t,R_{t+1},S_{t+1})\) and never needs the full transition probabilities.
-Example: learning chess
-State: the arrangement of pieces. Action: a legal move. Reward: +1 for a win, −1 for a loss, 0 for a draw. Early moves are poor, but over many games the agent learns moves with better expected outcomes, from experience alone.
-3
-TD learning and key terms
-Term	Meaning
-State \(S_t\), action \(A_t\)	Situation and decision at time \(t\)
-Reward \(R_{t+1}\)	Reward received after acting
-Policy \(\pi\)	Rule for selecting actions
-\(V(s)\), \(Q(s,a)\)	Expected future return from a state, or after an action in a state
-Learning rate \(\alpha\)	How much new information changes an estimate
-Discount \(\gamma\)	Importance of future rewards
-Bootstrapping	Updating an estimate using another estimate
-$$G_t=R_{t+1}+\gamma R_{t+2}+\gamma^2R_{t+3}+\cdots,\qquad 0\le\gamma\le1$$
-Temporal-difference learning. A model-free method that updates value estimates from the reward received plus the estimated value of the next state. It combines Monte Carlo (learning from experience) with dynamic programming (bootstrapping). Unlike Monte Carlo, it does not wait for the episode to finish.
-4
-TD(0) prediction
-TD(0) is the one-step method for estimating \(V^\pi(s)\) under a given policy \(\pi\).
-TD(0) update. $$V(S_t)\leftarrow V(S_t)+\alpha\,\delta_t,\qquad \delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t)$$ \(\delta_t\) is the TD error; \(R_{t+1}+\gamma V(S_{t+1})\) is the TD target. At a terminal state the next-state value is 0.
-Example: one TD(0) update
-Let \(V(S_t)=10\), \(R_{t+1}=5\), \(V(S_{t+1})=12\), \(\alpha=0.1\), \(\gamma=0.9\).
-$$\text{target}=5+0.9(12)=15.8,\qquad\delta_t=15.8-10=5.8$$ $$V_{\text{new}}(S_t)=10+0.1(5.8)=10.58$$
-Advantages
-Online: updates after every transition.
-No model needed.
-Works for continuing tasks and incomplete episodes.
-Cheap: a simple one-step update.
-Optimality
-In a finite Markov reward process, with a fixed policy, suitably diminishing learning rates and enough visits, tabular TD(0) converges to the true \(V^\pi\).
-It is not guaranteed to be most accurate after a limited number of samples.
-Versus Monte Carlo: often lower variance, but bootstrapping can add bias.
-With function approximation, convergence needs extra conditions.
-TD(0) evaluates a policy. It does not by itself find an optimal one.
-5
-SARSA: on-policy TD control
-SARSA learns action values while following and improving its current policy. The name is the tuple it uses: State, Action, Reward, State, Action.
-SARSA update. $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)\big]$$ \(A_{t+1}\) is the action actually chosen by the current policy.
-Initialize \(Q(s,a)\).
-Observe \(S_t\).
-Choose \(A_t\) with a policy such as \(\varepsilon\)-greedy.
-Act, receive \(R_{t+1}\), observe \(S_{t+1}\).
-Choose \(A_{t+1}\) with the same policy.
-Update \(Q(S_t,A_t)\).
-Repeat until the episode ends.
-Why on-policy? It learns the value of the policy that is generating the behaviour. If the agent explores with random actions, SARSA’s values include the effect of that exploration.
-6
-Q-learning: off-policy TD control
-Q-learning learns the optimal action-value function, under suitable conditions, using the best estimated action in the next state.
-Q-learning update. $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[R_{t+1}+\gamma\max_a Q(S_{t+1},a)-Q(S_t,A_t)\big]$$
-Why off-policy? Two policies are involved:
-Behaviour policy: selects actions, often \(\varepsilon\)-greedy.
-Target policy: greedy, \(\pi(s)\in\arg\max_a Q(s,a)\).
-The agent keeps exploring, yet the values it learns are those of the greedy policy.
-Example: one Q-learning update
-Let \(Q(S_t,A_t)=10\), \(R_{t+1}=5\), \(\max_aQ(S_{t+1},a)=12\), \(\alpha=0.1\), \(\gamma=0.9\).
-$$Q_{\text{new}}=10+0.1[5+0.9(12)-10]=10.58$$
-The value rises because the target (15.8) exceeds the old estimate.
-7
-Expected SARSA
-Instead of one sampled next action, Expected SARSA uses a probability-weighted average over all next actions under a target policy.
-Expected SARSA update. $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\Big[R_{t+1}+\gamma\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)-Q(S_t,A_t)\Big]$$ It is on-policy or off-policy depending on which policy \(\pi\) is used in the expectation.
-Algorithm	Next-state value used	Policy type
-SARSA	\(Q(S_{t+1},A_{t+1})\)	On-policy
-Q-learning	\(\max_aQ(S_{t+1},a)\)	Off-policy
-Expected SARSA	\(\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)\)	Either
-Remember: SARSA uses the next selected action, Q-learning the best next action, Expected SARSA the weighted average of next actions.
-8
-n-step bootstrapping
-One-step TD uses one reward and then bootstraps. Two-step TD uses two rewards, and n-step TD uses \(n\) rewards before bootstrapping from the estimated value after \(n\) steps.
-n-step return. $$G_{t:t+n}=\sum_{k=1}^{n}\gamma^{k-1}R_{t+k}+\gamma^nV(S_{t+n})$$ If the episode ends within \(n\) steps, the return contains only the rewards up to termination, with no bootstrapped term.
-n-step TD prediction. $$V(S_t)\leftarrow V(S_t)+\alpha\big[G_{t:t+n}-V(S_t)\big]$$
-Example: two-step TD
-Let \(R_{t+1}=4\), \(R_{t+2}=6\), \(V(S_{t+2})=10\), \(\gamma=0.9\), \(V(S_t)=12\), \(\alpha=0.1\).
-$$G_{t:t+2}=4+0.9(6)+0.9^2(10)=4+5.4+8.1=17.5$$ $$V_{\text{new}}(S_t)=12+0.1(17.5-12)=12.55$$
-9
-n-step SARSA
-An on-policy control method that uses \(n\) rewards and the action value after \(n\) steps.
-n-step SARSA. $$G_{t:t+n}=\sum_{k=1}^{n}\gamma^{k-1}R_{t+k}+\gamma^nQ(S_{t+n},A_{t+n})$$ $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[G_{t:t+n}-Q(S_t,A_t)\big]$$ For \(n=1\) this is ordinary SARSA.
-Advantage: reward information propagates back across several state-action pairs faster than with one-step SARSA.
-10
-Off-policy and importance sampling
-Off-policy learning learns about a target policy \(\pi\) while collecting experience with a different behaviour policy \(b\). When they differ, n-step methods can correct with importance sampling.
-Importance sampling ratio and update. $$\rho_{t+1:t+n-1}=\prod_{k=t+1}^{t+n-1}\frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}$$ $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\,\rho_{t+1:t+n-1}\big[G_{t:t+n}-Q(S_t,A_t)\big]$$ This requires \(b\) to give nonzero probability to any action \(\pi\) might take.
-Limitations
-Ratios can become very large.
-Large ratios raise the variance of updates.
-Learning can turn unstable, especially on long trajectories.
-Multiplying many ratios adds computation.
-11
-n-step tree backup
-Tree backup is an off-policy method that uses expected action values under the target policy instead of importance sampling ratios. At each step it combines the reward from the sampled action with the values of the other actions, weighted by target-policy probabilities, which forms a tree-like backup.
-One-step target. $$G_{t:t+1}=R_{t+1}+\gamma\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)$$ the same target as Expected SARSA.
-For several steps, within the horizon \(h=t+n\):
-$$G_{k:h}=R_{k+1}+\gamma\Big[\sum_{a\ne A_{k+1}}\pi(a\mid S_{k+1})Q(S_{k+1},a)+\pi(A_{k+1}\mid S_{k+1})\,G_{k+1:h}\Big]$$
-At the horizon \(G_{h:h}=Q(S_h,A_h)\) if the state is nonterminal; terminal branches stop without bootstrapping. The update is
-$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[G_{t:t+n}-Q(S_t,A_t)\big]$$
-Here \(G_{t:t+n}\) is the tree-backup target, not the ordinary n-step SARSA return.
-Advantages: no importance sampling ratios, can learn from another policy’s experience, uses information about alternative actions, avoids huge weights.
-Limitation: expectations over actions can be expensive when the action space is very large.
-12
-Trade-offs and summary
-Advantages of model-free control	Disadvantages
-No environment model needed	May need many interactions
-Learns directly from interaction	Exploration can be costly or risky
-Often simpler to implement	Slow when rewards are sparse
-Works where models are hard to obtain	Function approximation can be unstable
-Neural networks handle large state spaces	Optimal convergence not guaranteed everywhere
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CST497 Module 4: Temporal-Difference Methods</title>
+<meta name="description" content="Lecture notes on TD prediction and control: TD(0), SARSA, Q-learning, Expected SARSA, n-step methods and tree backup.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,560;1,9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<style>
+:root{--bg:#f7f5f0;--card:#fffdf9;--ink:#1c1a16;--mut:#52493d;--rule:#ddd6c8;--acc:#1f4d4a;--deep2:#163936;--die:#b8863a;--dietxt:#94682a;--soft:#f1e3c8;--soft2:#e9d3a3;--dot:rgba(31,77,74,.055);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16140f;--card:#1e1b14;--ink:#ece6d9;--mut:#b5ab95;--rule:#3a342a;--acc:#7fc4bd;--deep2:#a9dad4;--die:#d9a856;--dietxt:#e2b96a;--soft:#2e2718;--soft2:#4a3d22;--dot:rgba(127,196,189,.07)}}
+:root[data-theme="dark"]{--bg:#16140f;--card:#1e1b14;--ink:#ece6d9;--mut:#b5ab95;--rule:#3a342a;--acc:#7fc4bd;--deep2:#a9dad4;--die:#d9a856;--dietxt:#e2b96a;--soft:#2e2718;--soft2:#4a3d22;--dot:rgba(127,196,189,.07)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(1.5rem + env(safe-area-inset-top,0px))}
+@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{margin:0;background-color:var(--bg);background-image:radial-gradient(circle at 1.5px 1.5px,var(--dot) 1px,transparent 0);background-size:26px 26px;color:var(--ink);font:18px/1.68 Newsreader,Georgia,serif}
+a{color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+h1,h2,h3,h4{font-family:Fraunces,Georgia,serif}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:56px;padding:0 32px 90px}
+.hero{grid-column:1/-1;padding:68px 4px 46px;border-bottom:1px solid var(--rule)}
+.kicker{font:13px "JetBrains Mono",monospace;color:var(--mut);margin:0 0 14px}
+.kicker span{color:var(--dietxt)}
+h1{font-weight:560;font-size:clamp(2.2rem,4.2vw,3.3rem);line-height:1.06;margin:0;color:var(--deep2);max-width:16ch}
+.hero-sub{margin:18px 0 0;max-width:52ch;color:var(--mut);font-size:1.05rem}
+.toc{padding-top:42px}
+.toc-inner{position:sticky;top:calc(32px + env(safe-area-inset-top,0px));max-height:calc(100vh - 64px);overflow-y:auto}
+.toc-label{font:12px "JetBrains Mono",monospace;color:var(--mut);margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:toc}
+.toc li{counter-increment:toc;margin:0 0 3px}
+.toc a{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:3px;color:var(--ink);text-decoration:none;font-size:.94rem;line-height:1.3}
+.toc a:hover,.toc a.on{background:var(--soft);color:var(--deep2)}
+.toc a::before{content:counter(toc);font:.78rem "JetBrains Mono",monospace;color:var(--dietxt);width:1.6em;flex-shrink:0}
+.toc-toggle{display:none}
+main{max-width:700px;padding-top:42px}
+section{padding-bottom:54px;margin-bottom:54px;border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:none}
+.num{font:13px "JetBrains Mono",monospace;color:var(--card);background:var(--die);min-width:26px;height:26px;padding:0 6px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px}
+h2{font-weight:560;font-size:1.7rem;color:var(--deep2);margin:0 0 22px;line-height:1.2}
+h3{font-weight:500;font-style:italic;font-size:1.18rem;color:var(--acc);margin:30px 0 10px}
+h4{font-weight:500;font-size:1.02rem;color:var(--acc);margin:20px 0 6px}
+p,ul,ol.s{margin:0 0 16px}
+li{margin:.25rem 0}
+b{color:var(--deep2)}
+.def{background:var(--card);border-left:3px solid var(--acc);padding:14px 20px;margin:18px 0;border-radius:0 6px 6px 0}
+.def>:last-child{margin-bottom:0}
+.lab{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:500;color:var(--deep2)}
+.note{border-left:3px solid var(--die);padding:2px 0 2px 16px;color:var(--mut)}
+.example{margin:20px 0;padding:18px 22px;background:var(--soft);border-radius:6px}
+.example-label{font:11.5px "JetBrains Mono",monospace;color:var(--dietxt);margin:0 0 10px}
+.example>:last-child{margin-bottom:0}
+mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%;margin:14px 0!important}
+.def mjx-container[display="true"]{border:1.5px solid var(--acc);border-radius:6px;background:var(--bg);padding:14px 18px}
+.scroll{overflow-x:auto;margin:20px 0}
+table{border-collapse:collapse;width:100%;font-size:.96rem}
+th,td{border:1px solid var(--rule);padding:9px 14px;text-align:left}
+th{background:var(--acc);color:var(--card);font-weight:500}
+footer{grid-column:1/-1;padding:34px 4px 0;border-top:1px solid var(--rule);font:12px "JetBrains Mono",monospace;color:var(--mut)}
+@media(max-width:880px){.wrap{display:block;padding:0 20px 60px}.hero{padding:40px 0 28px}.toc{padding-top:0}.toc-inner{position:static;max-height:none;padding:18px 0}.toc-toggle{display:flex;width:100%;justify-content:space-between;background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;font:13px "JetBrains Mono",monospace;color:var(--deep2);cursor:pointer;margin-top:24px}.toc-body{display:none;margin-top:14px}.toc-body.open{display:block}main{padding-top:8px}footer{margin-top:20px}}
+.modnav{margin:0 0 16px;font:13px "JetBrains Mono",monospace}.modnav a{text-decoration:none}.modnav a:hover{text-decoration:underline;text-decoration-color:var(--die)}
+.hero{display:grid;grid-template-columns:1fr auto;align-items:end;gap:24px}.hero-die{width:118px;height:118px;flex-shrink:0}
+@media(max-width:880px){.hero{grid-template-columns:1fr}.hero-die{display:none}}
+.pager{display:flex;justify-content:flex-end;margin-top:8px}.pager a{display:block;border:1px solid var(--rule);background:var(--card);border-radius:8px;padding:14px 22px;text-decoration:none;text-align:right}.pager a:hover{background:var(--soft)}.pager small{display:block;font:12px "JetBrains Mono",monospace;color:var(--mut)}.pager span{font:500 1.15rem Fraunces,Georgia,serif;color:var(--deep2)}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.lr{display:grid;grid-template-columns:9.5rem 1fr 3.2rem;gap:10px;align-items:center;margin:6px 0;font:14px "JetBrains Mono",monospace;color:var(--deep2)}.lr input{width:100%;accent-color:var(--acc)}.lr output{text-align:right}
+.lsel{margin:10px 0;font:14px "JetBrains Mono",monospace;color:var(--deep2)}.lsel select{font:inherit;background:var(--card);color:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:5px 8px}
+details{border:1px solid var(--rule);background:var(--card);border-radius:6px;padding:.2rem 1rem;margin:1rem 0}summary{cursor:pointer;font:500 1rem Fraunces,Georgia,serif;padding:.5rem 0;color:var(--deep2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero"><div><p class="modnav"><a href="module2.html">← Module 2: Markov Decision Processes</a></p><p class="kicker">CST497 · Reinforcement Learning · <span>Module 4</span></p><h1>Temporal-Difference Methods</h1><p class="hero-sub">Model-free prediction and control: how an agent learns value estimates from raw experience, updating after every step by bootstrapping from its own predictions.</p></div><svg class="hero-die" viewBox="0 0 100 100" fill="none" aria-hidden="true"><rect x="6" y="6" width="88" height="88" rx="16" fill="var(--card)" stroke="var(--acc)" stroke-width="3"/><circle cx="28" cy="72" r="7" fill="var(--acc)"/><circle cx="50" cy="50" r="7" fill="var(--die)"/><circle cx="72" cy="28" r="7" fill="var(--die)"/><path d="M33 66L45 55M55 45L67 33" stroke="var(--mut)" stroke-width="3" stroke-linecap="round"/></svg></header>
+<nav class="toc" aria-label="Table of contents"><div class="toc-inner"><button class="toc-toggle" id="tg" aria-expanded="false" aria-controls="tb">On this page <span aria-hidden="true">＋</span></button><div class="toc-body" id="tb"><p class="toc-label">On this page</p><ol>
+<li><a href="#s1">Families of RL</a></li>
+<li><a href="#s2">Model-free prediction and control</a></li>
+<li><a href="#s3">TD learning and key terms</a></li>
+<li><a href="#s4">TD(0) prediction</a></li>
+<li><a href="#s5">SARSA</a></li>
+<li><a href="#s6">Q-learning</a></li>
+<li><a href="#s7">Expected SARSA</a></li>
+<li><a href="#s8">n-step bootstrapping</a></li>
+<li><a href="#s9">n-step SARSA</a></li>
+<li><a href="#s10">Off-policy and importance sampling</a></li>
+<li><a href="#s11">n-step tree backup</a></li>
+<li><a href="#s12">Trade-offs and summary</a></li>
+<li><a href="#lab">Update-rule lab</a></li>
+<li><a href="#check">Self-check</a></li>
+</ol></div></div></nav>
+<main>
 
-Algorithm	Purpose	Key feature
-TD(0)	Evaluation	One-step bootstrapping
-SARSA	Control	On-policy
-Q-learning	Control	Off-policy, max next Q
-Expected SARSA	Control	Expected next Q
-n-step TD	Evaluation	Several rewards, then bootstrap
-n-step SARSA	Control	Several rewards, on-policy
-n-step off-policy SARSA	Control	Importance sampling corrections
-n-step tree backup	Control	Expected backups, no ratios
-Exam points.
-TD prediction uses the reward plus the next estimated value; TD(0) is one-step.
-SARSA uses the next selected action; Q-learning the maximum next-action value; Expected SARSA an expected value.
-n-step TD uses several rewards before bootstrapping.
-Importance sampling corrects behaviour versus target policy; tree backup avoids it with expected backups.
-13
-Update-rule lab
-One transition, three update rules. Move the sliders and compare how SARSA, Q-learning and Expected SARSA use the same next-state action values. The behaviour policy is ε-greedy over three actions; SARSA uses the action you pick as the one actually taken next.
-Next action actually taken, A′
-Algorithm	Next-state value	TD target	New Q(S,A)
-14
-Self-check
-What is the TD error in TD(0)?
-\(\delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t)\): the TD target minus the current estimate.
-Why is SARSA on-policy and Q-learning off-policy?
-SARSA bootstraps from the action the current policy actually takes next, so it learns that policy’s values. Q-learning bootstraps from the maximum next value, so it learns the greedy policy while behaving differently.
-When does Expected SARSA equal Q-learning?
-When the target policy in the expectation is greedy, since the weighted average then collapses to the maximum.
-What problem does importance sampling solve, and what is its cost?
-It corrects for the mismatch between behaviour and target policies, but long products of ratios can be huge, giving high variance and instability.
-How does tree backup avoid importance sampling?
-It weights the values of all actions by their target-policy probabilities and continues only along the sampled action, so no ratios are multiplied.
-Next moduleModule 5 →
-CST497 — Reinforcement Learning · Module 4← Module 2 · Module 5 →
+<section id="s1"><span class="num">1</span><h2>Families of RL</h2>
+<p>In reinforcement learning (RL) an agent learns to decide by interacting with an environment and receiving rewards or penalties. The goal is a <b>policy</b> that maximizes expected cumulative reward.</p>
+<h3>Model-based RL</h3>
+<p>The agent uses a model of the environment (state transitions and expected rewards) to predict what follows an action, then plans and improves its policy. The model may be given or learned. <i>Example:</i> a robot learns how its movements change its position and plans a route.</p>
+<h3>Model-free RL</h3>
+<p>The agent learns directly from experience, with no model of the environment. TD learning is a core technique here. <i>Example:</i> a game agent learns which moves work by playing many games.</p>
+<h3>Three approaches in model-free RL</h3>
+<ul><li><b>Value-based:</b> estimate values of states or state-action pairs and act on them (Q-learning, SARSA, Expected SARSA).</li>
+<li><b>Policy-based:</b> learn the policy directly by adjusting its parameters (REINFORCE).</li>
+<li><b>Actor-critic:</b> an actor chooses actions while a critic evaluates them and gives feedback (A2C).</li></ul>
+<div class="scroll"><table><thead><tr><th>Feature<th>Model-free<th>Model-based</tr></thead><tbody>
+<tr><td>Idea<td>Learns from experience<td>Uses a model to predict and plan</tr>
+<tr><td>Model<td>Not required<td>Known or learned</tr>
+<tr><td>Sample efficiency<td>Often needs more interaction<td>Often fewer, if the model is accurate</tr>
+<tr><td>Computation<td>Less planning<td>More planning, extra complexity</tr>
+<tr><td>Adaptability<td>Adapts through new experience<td>Can replan if the model captures change</tr>
+<tr><td>Examples<td>SARSA, Q-learning, DQN<td>Dyna-Q, planning</tr></tbody></table></div>
+<p class="note">Model-free methods still use observed rewards and learned predictions. What they skip is an explicit model of the dynamics.</p></section>
+
+<section id="s2"><span class="num">2</span><h2>Model-free prediction and control</h2>
+<div class="def"><span class="lab">Model-free control.</span> Learning a policy that maximizes expected cumulative reward, by trial and error, without an explicit model of transition and reward dynamics. It balances <b>exploration</b> of new actions with <b>exploitation</b> of known good ones.</div>
+<div class="scroll"><table><thead><tr><th>Prediction<th>Control</tr></thead><tbody>
+<tr><td>Evaluates a given policy<td>Learns or improves a policy</tr>
+<tr><td>Estimates \(V^\pi(s)\) or \(Q^\pi(s,a)\)<td>Seeks an optimal or improved policy</tr>
+<tr><td>How good is this state or action under the policy?<td>Which action should the agent choose?</tr>
+<tr><td>Example: TD(0)<td>Examples: SARSA, Q-learning</tr></tbody></table></div>
+<p>A model-based agent knows \(p(s',r\mid s,a)\). A model-free agent only sees sampled transitions \((S_t,A_t,R_{t+1},S_{t+1})\) and never needs the full transition probabilities.</p>
+<div class="example"><p class="example-label">Example: learning chess</p>
+<p>State: the arrangement of pieces. Action: a legal move. Reward: +1 for a win, −1 for a loss, 0 for a draw. Early moves are poor, but over many games the agent learns moves with better expected outcomes, from experience alone.</p></div></section>
+
+<section id="s3"><span class="num">3</span><h2>TD learning and key terms</h2>
+<div class="scroll"><table><thead><tr><th>Term<th>Meaning</tr></thead><tbody>
+<tr><td>State \(S_t\), action \(A_t\)<td>Situation and decision at time \(t\)</tr>
+<tr><td>Reward \(R_{t+1}\)<td>Reward received after acting</tr>
+<tr><td>Policy \(\pi\)<td>Rule for selecting actions</tr>
+<tr><td>\(V(s)\), \(Q(s,a)\)<td>Expected future return from a state, or after an action in a state</tr>
+<tr><td>Learning rate \(\alpha\)<td>How much new information changes an estimate</tr>
+<tr><td>Discount \(\gamma\)<td>Importance of future rewards</tr>
+<tr><td>Bootstrapping<td>Updating an estimate using another estimate</tr></tbody></table></div>
+$$G_t=R_{t+1}+\gamma R_{t+2}+\gamma^2R_{t+3}+\cdots,\qquad 0\le\gamma\le1$$
+<div class="def"><span class="lab">Temporal-difference learning.</span> A model-free method that updates value estimates from the reward received plus the estimated value of the next state. It combines Monte Carlo (learning from experience) with dynamic programming (bootstrapping). Unlike Monte Carlo, it does not wait for the episode to finish.</div></section>
+
+<section id="s4"><span class="num">4</span><h2>TD(0) prediction</h2>
+<p>TD(0) is the one-step method for estimating \(V^\pi(s)\) under a given policy \(\pi\).</p>
+<div class="def"><span class="lab">TD(0) update.</span>
+$$V(S_t)\leftarrow V(S_t)+\alpha\,\delta_t,\qquad \delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t)$$
+\(\delta_t\) is the TD error; \(R_{t+1}+\gamma V(S_{t+1})\) is the TD target. At a terminal state the next-state value is 0.</div>
+<div class="example"><p class="example-label">Example: one TD(0) update</p>
+<p>Let \(V(S_t)=10\), \(R_{t+1}=5\), \(V(S_{t+1})=12\), \(\alpha=0.1\), \(\gamma=0.9\).</p>
+$$\text{target}=5+0.9(12)=15.8,\qquad\delta_t=15.8-10=5.8$$
+$$V_{\text{new}}(S_t)=10+0.1(5.8)=10.58$$</div>
+<h3>Advantages</h3>
+<ul><li>Online: updates after every transition.</li><li>No model needed.</li><li>Works for continuing tasks and incomplete episodes.</li><li>Cheap: a simple one-step update.</li></ul>
+<h3>Optimality</h3>
+<ul><li>In a finite Markov reward process, with a fixed policy, suitably diminishing learning rates and enough visits, tabular TD(0) converges to the true \(V^\pi\).</li>
+<li>It is not guaranteed to be most accurate after a limited number of samples.</li>
+<li>Versus Monte Carlo: often lower variance, but bootstrapping can add bias.</li>
+<li>With function approximation, convergence needs extra conditions.</li></ul>
+<p class="note">TD(0) evaluates a policy. It does not by itself find an optimal one.</p></section>
+
+<section id="s5"><span class="num">5</span><h2>SARSA: on-policy TD control</h2>
+<p>SARSA learns action values while following and improving its current policy. The name is the tuple it uses: State, Action, Reward, State, Action.</p>
+<div class="def"><span class="lab">SARSA update.</span>
+$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)\big]$$
+\(A_{t+1}\) is the action actually chosen by the current policy.</div>
+<ol class="s"><li>Initialize \(Q(s,a)\).</li><li>Observe \(S_t\).</li><li>Choose \(A_t\) with a policy such as \(\varepsilon\)-greedy.</li><li>Act, receive \(R_{t+1}\), observe \(S_{t+1}\).</li><li>Choose \(A_{t+1}\) with the same policy.</li><li>Update \(Q(S_t,A_t)\).</li><li>Repeat until the episode ends.</li></ol>
+<p><b>Why on-policy?</b> It learns the value of the policy that is generating the behaviour. If the agent explores with random actions, SARSA’s values include the effect of that exploration.</p></section>
+
+<section id="s6"><span class="num">6</span><h2>Q-learning: off-policy TD control</h2>
+<p>Q-learning learns the optimal action-value function, under suitable conditions, using the best estimated action in the next state.</p>
+<div class="def"><span class="lab">Q-learning update.</span>
+$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[R_{t+1}+\gamma\max_a Q(S_{t+1},a)-Q(S_t,A_t)\big]$$</div>
+<p><b>Why off-policy?</b> Two policies are involved:</p>
+<ul><li><b>Behaviour policy:</b> selects actions, often \(\varepsilon\)-greedy.</li><li><b>Target policy:</b> greedy, \(\pi(s)\in\arg\max_a Q(s,a)\).</li></ul>
+<p>The agent keeps exploring, yet the values it learns are those of the greedy policy.</p>
+<div class="example"><p class="example-label">Example: one Q-learning update</p>
+<p>Let \(Q(S_t,A_t)=10\), \(R_{t+1}=5\), \(\max_aQ(S_{t+1},a)=12\), \(\alpha=0.1\), \(\gamma=0.9\).</p>
+$$Q_{\text{new}}=10+0.1[5+0.9(12)-10]=10.58$$
+<p>The value rises because the target (15.8) exceeds the old estimate.</p></div></section>
+
+<section id="s7"><span class="num">7</span><h2>Expected SARSA</h2>
+<p>Instead of one sampled next action, Expected SARSA uses a probability-weighted average over all next actions under a target policy.</p>
+<div class="def"><span class="lab">Expected SARSA update.</span>
+$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\Big[R_{t+1}+\gamma\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)-Q(S_t,A_t)\Big]$$
+It is on-policy or off-policy depending on which policy \(\pi\) is used in the expectation.</div>
+<div class="scroll"><table><thead><tr><th>Algorithm<th>Next-state value used<th>Policy type</tr></thead><tbody>
+<tr><td>SARSA<td>\(Q(S_{t+1},A_{t+1})\)<td>On-policy</tr>
+<tr><td>Q-learning<td>\(\max_aQ(S_{t+1},a)\)<td>Off-policy</tr>
+<tr><td>Expected SARSA<td>\(\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)\)<td>Either</tr></tbody></table></div>
+<p class="note">Remember: SARSA uses the next selected action, Q-learning the best next action, Expected SARSA the weighted average of next actions.</p></section>
+
+<section id="s8"><span class="num">8</span><h2>n-step bootstrapping</h2>
+<p>One-step TD uses one reward and then bootstraps. Two-step TD uses two rewards, and n-step TD uses \(n\) rewards before bootstrapping from the estimated value after \(n\) steps.</p>
+<div class="def"><span class="lab">n-step return.</span>
+$$G_{t:t+n}=\sum_{k=1}^{n}\gamma^{k-1}R_{t+k}+\gamma^nV(S_{t+n})$$
+If the episode ends within \(n\) steps, the return contains only the rewards up to termination, with no bootstrapped term.</div>
+<div class="def"><span class="lab">n-step TD prediction.</span> $$V(S_t)\leftarrow V(S_t)+\alpha\big[G_{t:t+n}-V(S_t)\big]$$</div>
+<div class="example"><p class="example-label">Example: two-step TD</p>
+<p>Let \(R_{t+1}=4\), \(R_{t+2}=6\), \(V(S_{t+2})=10\), \(\gamma=0.9\), \(V(S_t)=12\), \(\alpha=0.1\).</p>
+$$G_{t:t+2}=4+0.9(6)+0.9^2(10)=4+5.4+8.1=17.5$$
+$$V_{\text{new}}(S_t)=12+0.1(17.5-12)=12.55$$</div></section>
+
+<section id="s9"><span class="num">9</span><h2>n-step SARSA</h2>
+<p>An on-policy control method that uses \(n\) rewards and the action value after \(n\) steps.</p>
+<div class="def"><span class="lab">n-step SARSA.</span>
+$$G_{t:t+n}=\sum_{k=1}^{n}\gamma^{k-1}R_{t+k}+\gamma^nQ(S_{t+n},A_{t+n})$$
+$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[G_{t:t+n}-Q(S_t,A_t)\big]$$
+For \(n=1\) this is ordinary SARSA.</div>
+<p>Advantage: reward information propagates back across several state-action pairs faster than with one-step SARSA.</p></section>
+
+<section id="s10"><span class="num">10</span><h2>Off-policy and importance sampling</h2>
+<p>Off-policy learning learns about a <b>target policy</b> \(\pi\) while collecting experience with a different <b>behaviour policy</b> \(b\). When they differ, n-step methods can correct with importance sampling.</p>
+<div class="def"><span class="lab">Importance sampling ratio and update.</span>
+$$\rho_{t+1:t+n-1}=\prod_{k=t+1}^{t+n-1}\frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}$$
+$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\,\rho_{t+1:t+n-1}\big[G_{t:t+n}-Q(S_t,A_t)\big]$$
+This requires \(b\) to give nonzero probability to any action \(\pi\) might take.</div>
+<h3>Limitations</h3>
+<ul><li>Ratios can become very large.</li><li>Large ratios raise the variance of updates.</li><li>Learning can turn unstable, especially on long trajectories.</li><li>Multiplying many ratios adds computation.</li></ul></section>
+
+<section id="s11"><span class="num">11</span><h2>n-step tree backup</h2>
+<p>Tree backup is an off-policy method that uses expected action values under the target policy instead of importance sampling ratios. At each step it combines the reward from the sampled action with the values of the other actions, weighted by target-policy probabilities, which forms a tree-like backup.</p>
+<div class="def"><span class="lab">One-step target.</span>
+$$G_{t:t+1}=R_{t+1}+\gamma\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)$$
+the same target as Expected SARSA.</div>
+<p>For several steps, within the horizon \(h=t+n\):</p>
+$$G_{k:h}=R_{k+1}+\gamma\Big[\sum_{a\ne A_{k+1}}\pi(a\mid S_{k+1})Q(S_{k+1},a)+\pi(A_{k+1}\mid S_{k+1})\,G_{k+1:h}\Big]$$
+<p>At the horizon \(G_{h:h}=Q(S_h,A_h)\) if the state is nonterminal; terminal branches stop without bootstrapping. The update is</p>
+$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[G_{t:t+n}-Q(S_t,A_t)\big]$$
+<p>Here \(G_{t:t+n}\) is the tree-backup target, not the ordinary n-step SARSA return.</p>
+<ul><li><b>Advantages:</b> no importance sampling ratios, can learn from another policy’s experience, uses information about alternative actions, avoids huge weights.</li>
+<li><b>Limitation:</b> expectations over actions can be expensive when the action space is very large.</li></ul></section>
+
+<section id="s12"><span class="num">12</span><h2>Trade-offs and summary</h2>
+<div class="scroll"><table><thead><tr><th>Advantages of model-free control<th>Disadvantages</tr></thead><tbody>
+<tr><td>No environment model needed<td>May need many interactions</tr>
+<tr><td>Learns directly from interaction<td>Exploration can be costly or risky</tr>
+<tr><td>Often simpler to implement<td>Slow when rewards are sparse</tr>
+<tr><td>Works where models are hard to obtain<td>Function approximation can be unstable</tr>
+<tr><td>Neural networks handle large state spaces<td>Optimal convergence not guaranteed everywhere</tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>Algorithm<th>Purpose<th>Key feature</tr></thead><tbody>
+<tr><td>TD(0)<td>Evaluation<td>One-step bootstrapping</tr>
+<tr><td>SARSA<td>Control<td>On-policy</tr>
+<tr><td>Q-learning<td>Control<td>Off-policy, max next Q</tr>
+<tr><td>Expected SARSA<td>Control<td>Expected next Q</tr>
+<tr><td>n-step TD<td>Evaluation<td>Several rewards, then bootstrap</tr>
+<tr><td>n-step SARSA<td>Control<td>Several rewards, on-policy</tr>
+<tr><td>n-step off-policy SARSA<td>Control<td>Importance sampling corrections</tr>
+<tr><td>n-step tree backup<td>Control<td>Expected backups, no ratios</tr></tbody></table></div>
+<div class="def"><span class="lab">Exam points.</span>
+<ul><li>TD prediction uses the reward plus the next estimated value; TD(0) is one-step.</li>
+<li>SARSA uses the next selected action; Q-learning the maximum next-action value; Expected SARSA an expected value.</li>
+<li>n-step TD uses several rewards before bootstrapping.</li>
+<li>Importance sampling corrects behaviour versus target policy; tree backup avoids it with expected backups.</li></ul></div></section>
+<section id="lab"><span class="num">13</span><h2>Update-rule lab</h2>
+<p>One transition, three update rules. Move the sliders and compare how SARSA, Q-learning and Expected SARSA use the same next-state action values. The behaviour policy is ε-greedy over three actions; SARSA uses the action you pick as the one actually taken next.</p>
+<div id="lrows"></div>
+<div class="lsel"><label for="nx">Next action actually taken, A′ </label><select id="nx"><option value="0">a1</option><option value="1">a2</option><option value="2">a3</option></select></div>
+<div class="scroll"><table id="lt"><thead><tr><th>Algorithm<th>Next-state value<th>TD target<th>New Q(S,A)</tr></thead><tbody></tbody></table></div>
+<p id="lsay" class="note" aria-live="polite"></p>
+<script>
+(function(){
+var F=[["q0","Q(S,A)",10,-20,30,.5],["r","Reward R",5,-10,10,.5],["al","α",.1,0,1,.05],["ga","γ",.9,0,1,.05],["ep","ε",.2,0,1,.05],["v0","Q(S′,a1)",8,-20,30,.5],["v1","Q(S′,a2)",12,-20,30,.5],["v2","Q(S′,a3)",6,-20,30,.5]],E={},O={},box=document.getElementById("lrows"),nx=document.getElementById("nx"),tb=document.querySelector("#lt tbody"),say=document.getElementById("lsay");
+F.forEach(function(f){var d=document.createElement("div");d.className="lr";var l=document.createElement("label");l.textContent=f[1];l.htmlFor="i_"+f[0];var i=document.createElement("input");i.type="range";i.id="i_"+f[0];i.min=f[3];i.max=f[4];i.step=f[5];i.value=f[2];var o=document.createElement("output");d.appendChild(l);d.appendChild(i);d.appendChild(o);box.appendChild(d);E[f[0]]=i;O[f[0]]=o;i.addEventListener("input",draw)});
+nx.addEventListener("change",draw);
+function n(k){return parseFloat(E[k].value)}
+function draw(){var q0=n("q0"),r=n("r"),al=n("al"),ga=n("ga"),ep=n("ep"),v=[n("v0"),n("v1"),n("v2")],a=parseInt(nx.value,10);
+F.forEach(function(f){O[f[0]].textContent=n(f[0]).toFixed(2).replace(/\.?0+$/,"")});
+var g=v.indexOf(Math.max.apply(null,v)),ex=0;v.forEach(function(x,i){ex+=(ep/3+(i==g?1-ep:0))*x});
+var rows=[["SARSA",v[a]],["Q-learning",v[g]],["Expected SARSA",ex]];tb.textContent="";var nw=[];
+rows.forEach(function(x){var t=r+ga*x[1],q=q0+al*(t-q0);nw.push(q);var tr=document.createElement("tr");[x[0],x[1].toFixed(3),t.toFixed(3),q.toFixed(3)].forEach(function(c){var td=document.createElement("td");td.textContent=c;tr.appendChild(td)});tb.appendChild(tr)});
+say.textContent=a==g?"The sampled action is the greedy one, so SARSA and Q-learning agree.":"The sampled action is not the greedy one: SARSA bootstraps from it, while Q-learning still uses the maximum."}
+draw();
+})();
+</script></section>
+
+<section id="check"><span class="num">14</span><h2>Self-check</h2>
+<details><summary>What is the TD error in TD(0)?</summary><p>\(\delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t)\): the TD target minus the current estimate.</p></details>
+<details><summary>Why is SARSA on-policy and Q-learning off-policy?</summary><p>SARSA bootstraps from the action the current policy actually takes next, so it learns that policy’s values. Q-learning bootstraps from the maximum next value, so it learns the greedy policy while behaving differently.</p></details>
+<details><summary>When does Expected SARSA equal Q-learning?</summary><p>When the target policy in the expectation is greedy, since the weighted average then collapses to the maximum.</p></details>
+<details><summary>What problem does importance sampling solve, and what is its cost?</summary><p>It corrects for the mismatch between behaviour and target policies, but long products of ratios can be huge, giving high variance and instability.</p></details>
+<details><summary>How does tree backup avoid importance sampling?</summary><p>It weights the values of all actions by their target-policy probabilities and continues only along the sampled action, so no ratios are multiplied.</p></details></section>
+
+<nav class="pager" aria-label="Next module"><a href="module5.html"><small>Next module</small><span>Module 5 →</span></a></nav>
+</main>
+<footer><span>CST497 — Reinforcement Learning · Module 4</span><span><a href="module2.html">← Module 2</a> · <a href="module5.html">Module 5 →</a></span></footer>
+</div>
+<script>
+const ls=[...document.querySelectorAll('nav a')];
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)ls.forEach(a=>a.classList.toggle('on',a.hash==='#'+e.target.id))}),{rootMargin:'-15% 0px -75% 0px'});
+document.querySelectorAll('section[id]').forEach(s=>io.observe(s));
+var tg=document.getElementById('tg'),tb=document.getElementById('tb');tg.addEventListener('click',function(){var o=tb.classList.toggle('open');tg.setAttribute('aria-expanded',o?'true':'false')});
+</script>
+</body>
+</html>
