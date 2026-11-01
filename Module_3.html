@@ -71,7 +71,7 @@ details{border:1px solid var(--rule);background:var(--card);border-radius:6px;pa
 </head>
 <body>
 <div class="wrap">
-<header class="hero"><div><p class="modnav"><a href="module3.html">← Module 3</a></p><p class="kicker">CST497 · Reinforcement Learning · <span>Module 4</span></p><h1>Temporal-Difference Methods</h1><p class="hero-sub">Model-free prediction and control: how an agent learns value estimates from raw experience, updating after every step by bootstrapping from its own predictions.</p></div><svg class="hero-die" viewBox="0 0 100 100" fill="none" aria-hidden="true"><rect x="6" y="6" width="88" height="88" rx="16" fill="var(--card)" stroke="var(--acc)" stroke-width="3"/><circle cx="28" cy="72" r="7" fill="var(--acc)"/><circle cx="50" cy="50" r="7" fill="var(--die)"/><circle cx="72" cy="28" r="7" fill="var(--die)"/><path d="M33 66L45 55M55 45L67 33" stroke="var(--mut)" stroke-width="3" stroke-linecap="round"/></svg></header>
+<header class="hero"><div><p class="modnav"><a href="https://leenasilvoster.github.io/Reinforcement_Learning/Module_3.html">← Module 3</a></p><p class="kicker">CST497 · Reinforcement Learning · <span>Module 4</span></p><h1>Temporal-Difference Methods</h1><p class="hero-sub">Model-free prediction and control: how an agent learns value estimates from raw experience, updating after every step by bootstrapping from its own predictions.</p></div><svg class="hero-die" viewBox="0 0 100 100" fill="none" aria-hidden="true"><rect x="6" y="6" width="88" height="88" rx="16" fill="var(--card)" stroke="var(--acc)" stroke-width="3"/><circle cx="28" cy="72" r="7" fill="var(--acc)"/><circle cx="50" cy="50" r="7" fill="var(--die)"/><circle cx="72" cy="28" r="7" fill="var(--die)"/><path d="M33 66L45 55M55 45L67 33" stroke="var(--mut)" stroke-width="3" stroke-linecap="round"/></svg></header>
 <nav class="toc" aria-label="Table of contents"><div class="toc-inner"><button class="toc-toggle" id="tg" aria-expanded="false" aria-controls="tb">On this page <span aria-hidden="true">＋</span></button><div class="toc-body" id="tb"><p class="toc-label">On this page</p><ol>
 <li><a href="#s1">Families of RL</a></li>
 <li><a href="#s2">Model-free prediction and control</a></li>
@@ -90,8 +90,8 @@ details{border:1px solid var(--rule);background:var(--card);border-radius:6px;pa
 </ol></div></div></nav>
 <main>
 <div class="def"><span class="lab">Syllabus.</span>
-<ul><li><b>TD Methods:</b> TD Prediction, Advantages of TD Prediction Methods, Optimality of TD(0), SARSA: On-policy TD Control, Q-learning: Off-policy TD Control, Expected SARSA.</li>
-<li><b>n-step Bootstrapping:</b> n-step TD Prediction, n-step SARSA, n-step Off-policy Learning, Off-policy Learning Without Importance Sampling: The n-step Tree Backup Algorithm.</li></ul></div>
+<ul><li><b>TD Methods:</b> <a href="#s4">TD Prediction</a>, <a href="#adv">Advantages of TD Prediction Methods</a>, <a href="#opt">Optimality of TD(0)</a>, <a href="#s5">SARSA: On-policy TD Control</a>, <a href="#s6">Q-learning: Off-policy TD Control</a>, <a href="#s7">Expected SARSA</a>.</li>
+<li><b>n-step Bootstrapping:</b> <a href="#nstd">n-step TD Prediction</a>, <a href="#s9">n-step SARSA</a>, <a href="#s10">n-step Off-policy Learning</a>, <a href="#s11">Off-policy Learning Without Importance Sampling: The n-step Tree Backup Algorithm</a>.</li></ul></div>
 
 <section id="s1"><span class="num">1</span><h2>Families of RL</h2>
 <p>In reinforcement learning (RL) an agent learns to decide by interacting with an environment and receiving rewards or penalties. The goal is a <b>policy</b> that maximizes expected cumulative reward.</p>
@@ -103,6 +103,16 @@ details{border:1px solid var(--rule);background:var(--card);border-radius:6px;pa
 <ul><li><b>Value-based:</b> estimate values of states or state-action pairs and act on them (Q-learning, SARSA, Expected SARSA).</li>
 <li><b>Policy-based:</b> learn the policy directly by adjusting its parameters (REINFORCE).</li>
 <li><b>Actor-critic:</b> an actor chooses actions while a critic evaluates them and gives feedback (A2C).</li></ul>
+<figure style="margin:24px 0"><p class="example-label" style="margin-bottom:6px">Classification of Reinforcement Learning Methods</p>
+<svg viewBox="0 0 340 206" role="img" aria-label="Reinforcement Learning splits into model-based and model-free RL; model-free splits into value-based (Q-learning, SARSA), policy-based (REINFORCE) and actor-critic (A2C, DDPG)" style="width:100%;max-width:32rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<rect x="95" y="5" width="150" height="32" rx="6" fill="var(--acc)"/><text x="170" y="25" fill="var(--card)" text-anchor="middle" font-size="12" font-weight="bold">Reinforcement Learning</text>
+<g stroke="var(--mut)" stroke-width="1.4" fill="none" opacity=".8"><path d="M170 37V50H78V65M170 50H262V65"/><path d="M262 98V114H58V134M262 114H170V134M262 114H282V134"/></g>
+<rect x="9" y="65" width="138" height="33" rx="5" fill="var(--soft)" stroke="var(--die)"/><text x="78" y="85" font-size="12" fill="var(--deep2)" text-anchor="middle" font-weight="bold">Model-Based RL</text>
+<rect x="192" y="65" width="138" height="33" rx="5" fill="var(--card)" stroke="var(--acc)"/><text x="261" y="85" font-size="12" fill="var(--deep2)" text-anchor="middle" font-weight="bold">Model-Free RL</text>
+<rect x="3" y="134" width="108" height="45" rx="5" fill="var(--card)" stroke="var(--die)"/><text x="57" y="151" font-size="11" text-anchor="middle" fill="var(--deep2)" font-weight="bold">Value-Based</text><text x="57" y="165" font-size="11" text-anchor="middle" fill="var(--deep2)" font-weight="bold">Methods</text><text x="57" y="196" font-size="10" text-anchor="middle" fill="var(--ink)">Q-learning, SARSA</text>
+<rect x="116" y="134" width="108" height="45" rx="5" fill="var(--card)" stroke="var(--die)"/><text x="170" y="151" font-size="11" text-anchor="middle" fill="var(--deep2)" font-weight="bold">Policy-Based</text><text x="170" y="165" font-size="11" text-anchor="middle" fill="var(--deep2)" font-weight="bold">Methods</text><text x="170" y="196" font-size="10" text-anchor="middle" fill="var(--ink)">REINFORCE</text>
+<rect x="229" y="134" width="108" height="45" rx="5" fill="var(--card)" stroke="var(--die)"/><text x="283" y="151" font-size="11" text-anchor="middle" fill="var(--deep2)" font-weight="bold">Actor-Critic</text><text x="283" y="165" font-size="11" text-anchor="middle" fill="var(--deep2)" font-weight="bold">Methods</text><text x="283" y="196" font-size="10" text-anchor="middle" fill="var(--ink)">A2C, DDPG</text></svg>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 1: Basic classification of Reinforcement Learning</figcaption></figure>
 <div class="scroll"><table><thead><tr><th>Feature<th>Model-free<th>Model-based</tr></thead><tbody>
 <tr><td>Idea<td>Learns from experience<td>Uses a model to predict and plan</tr>
 <tr><td>Model<td>Not required<td>Known or learned</tr>
@@ -124,6 +134,40 @@ details{border:1px solid var(--rule);background:var(--card);border-radius:6px;pa
 <p>State: the arrangement of pieces. Action: a legal move. Reward: +1 for a win, −1 for a loss, 0 for a draw. Early moves are poor, but over many games the agent learns moves with better expected outcomes, from experience alone.</p></div></section>
 
 <section id="s3"><span class="num">3</span><h2>TD learning and key terms</h2>
+<div class="def"><span class="lab">Temporal-difference learning.</span> A model-free method that updates value estimates from the reward received plus the estimated value of the next state. It combines Monte Carlo (learning from experience) with dynamic programming (bootstrapping). Unlike Monte Carlo, it does not wait for the episode to finish.</div>
+<h3>Overview</h3>
+<p>TD learning is a model-free method for estimating an agent’s expected future rewards through interaction with its environment. It combines ideas from Monte Carlo (MC) methods and dynamic programming (DP):</p>
+<ul><li>Like MC, it learns directly from experience without a model of the environment.</li><li>Like DP, it bootstraps: it updates a value estimate using another estimated value.</li><li>Unlike MC, one-step TD updates after each step without waiting for the episode to finish.</li><li>It can be used for both policy evaluation (prediction) and policy improvement (control).</li></ul>
+<p>TD learning is commonly used in value-based reinforcement learning methods such as TD(0), SARSA and Q-learning. The main difference between MC, DP and TD methods lies in how their value estimates are updated.</p>
+<h3>Working of TD learning</h3>
+<p>The agent observes a state, takes an action, receives a reward and moves to the next state. It then updates its earlier value estimate using the new information.</p>
+<figure style="margin:24px 0"><svg viewBox="0 0 340 115" role="img" aria-label="Current state S_t, take action A_t, next state S_t+1; observe reward R_t+1 and update the value estimate" style="width:100%;max-width:32rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<rect x="5" y="23" width="102" height="54" rx="7" fill="var(--card)" stroke="var(--acc)"/><text x="56" y="43" fill="var(--mut)" font-size="11" text-anchor="middle">Current state</text><text x="56" y="61" fill="var(--deep2)" font-size="15" font-weight="bold" text-anchor="middle">Sₜ</text>
+<rect x="119" y="23" width="102" height="54" rx="7" fill="var(--card)" stroke="var(--acc)"/><text x="170" y="43" fill="var(--mut)" font-size="11" text-anchor="middle">Take action</text><text x="170" y="61" fill="var(--deep2)" font-size="15" font-weight="bold" text-anchor="middle">Aₜ</text>
+<rect x="233" y="23" width="102" height="54" rx="7" fill="var(--card)" stroke="var(--acc)"/><text x="284" y="43" fill="var(--mut)" font-size="11" text-anchor="middle">Next state</text><text x="284" y="61" fill="var(--deep2)" font-size="15" font-weight="bold" text-anchor="middle">Sₜ₊₁</text>
+<g stroke="var(--mut)" stroke-width="1.5" fill="none"><path d="M107 50H117M114 46L118 50L114 54"/><path d="M221 50H231M228 46L232 50L228 54"/></g>
+<text x="170" y="98" text-anchor="middle" fill="var(--ink)" font-size="11">Observe reward Rₜ₊₁ and update the value estimate</text></svg></figure>
+<h3>Basic idea</h3>
+<p>The agent learns by comparing its previous estimate with a new estimate obtained after receiving a reward. Consider a robot learning to reach a destination:</p>
+<ol class="s"><li>The robot is in the current state \(S_t\).</li><li>It takes an action and receives reward \(R_{t+1}\).</li><li>It moves to the next state \(S_{t+1}\).</li><li>It uses the reward and the estimated next-state value to update its current-state value.</li></ol>
+<h3>Temporal-difference error</h3>
+<p>The TD error measures the difference between the new one-step target and the current estimated value.</p>
+<div class="def">$$\boxed{\delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t)}$$
+Where:
+<ul><li>\(\delta_t\) = temporal-difference error</li><li>\(R_{t+1}\) = reward received after taking an action</li><li>\(\gamma\) = discount factor (between 0 and 1)</li><li>\(V(S_t)\) = current state’s estimated value</li><li>\(V(S_{t+1})\) = next state’s estimated value</li></ul></div>
+<p>The TD(0) value update is</p>
+<div class="def">$$\boxed{V(S_t)\leftarrow V(S_t)+\alpha\,\delta_t}$$
+where \(\alpha\) is the learning rate.</div>
+<div class="example"><p class="example-label">Numerical example</p>
+<p>Suppose:</p>
+<ul><li>Current state value = 10</li><li>Reward received = 5</li><li>Next-state value = 12</li><li>Discount factor = 0.9</li><li>Learning rate = 0.1</li></ul>
+<p>TD error:</p>
+$$\delta_t=5+0.9(12)-10=5.8$$
+<p>Updated value:</p>
+$$V_{\text{new}}(S_t)=10+0.1(5.8)$$
+$$\boxed{V_{\text{new}}(S_t)=10.58}$$
+<p>Therefore, the agent updates its estimated state value from 10 to 10.58.</p></div>
+<h3>Key terms</h3>
 <div class="scroll"><table><thead><tr><th>Term<th>Meaning</tr></thead><tbody>
 <tr><td>State \(S_t\), action \(A_t\)<td>Situation and decision at time \(t\)</tr>
 <tr><td>Reward \(R_{t+1}\)<td>Reward received after acting</tr>
@@ -132,39 +176,154 @@ details{border:1px solid var(--rule);background:var(--card);border-radius:6px;pa
 <tr><td>Learning rate \(\alpha\)<td>How much new information changes an estimate</tr>
 <tr><td>Discount \(\gamma\)<td>Importance of future rewards</tr>
 <tr><td>Bootstrapping<td>Updating an estimate using another estimate</tr></tbody></table></div>
-$$G_t=R_{t+1}+\gamma R_{t+2}+\gamma^2R_{t+3}+\cdots,\qquad 0\le\gamma\le1$$
-<div class="def"><span class="lab">Temporal-difference learning.</span> A model-free method that updates value estimates from the reward received plus the estimated value of the next state. It combines Monte Carlo (learning from experience) with dynamic programming (bootstrapping). Unlike Monte Carlo, it does not wait for the episode to finish.</div></section>
+<p>The discounted return is</p>
+$$G_t=R_{t+1}+\gamma R_{t+2}+\gamma^2R_{t+3}+\cdots$$
+<p>where \(0\leq\gamma\leq1\).</p>
+<h3>Comparison of MC, DP and TD learning</h3>
+<div class="scroll"><table><thead><tr><th>Feature<th>Monte Carlo<th>Dynamic Programming<th>TD Learning</tr></thead><tbody>
+<tr><td>Environment model<td>Not required<td>Required<td>Not required</tr>
+<tr><td>Learning source<td>Complete episode returns<td>Environment model<td>Observed rewards and estimated next-state values</tr>
+<tr><td>Learns from sampled experience<td>Yes<td>Not required<td>Yes</tr>
+<tr><td>Bootstrapping<td>No<td>Yes<td>Yes</tr>
+<tr><td>Waits until episode ends<td>Yes, for ordinary MC prediction<td>No<td>No</tr>
+<tr><td>Update timing<td>After episode ends<td>During model-based evaluation<td>After each step for TD(0)</tr>
+<tr><td>Suitable for continuing tasks<td>Less convenient<td>Yes<td>Yes</tr></tbody></table></div>
+<h3 id="journey">Example: predicting journey time</h3>
+<p>Consider a person travelling home and estimating how much time is left to reach the destination.</p>
+<ul><li><b>Monte Carlo method:</b> the person waits until reaching home, then compares the predicted journey time with the actual journey time and updates the estimate.</li>
+<li><b>TD learning:</b> the person updates the estimate at each stage of the journey, using the time already spent travelling and the new estimate of the remaining time.</li></ul>
+<p>For example, if the person originally predicts 30 minutes but later receives information suggesting the journey will take longer, the estimate can be adjusted immediately, without waiting to reach home. Thus, TD learning updates predictions step by step, based on the difference between the old estimate and the new one-step target.</p>
+<figure style="margin:24px 0"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px">
+<div><p class="example-label" style="margin:0 0 4px">Monte Carlo</p><svg viewBox="0 0 340 240" role="img" aria-label="Monte Carlo: each prediction is compared with the actual outcome of 43 minutes" style="width:100%;display:block;font-family:Newsreader,Georgia,serif"><defs><marker id="mA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#c0392b"/></marker></defs><g stroke="var(--mut)" stroke-width="1.2"><path d="M40 47V200H310"/></g><text x="34" y="186" text-anchor="end" font-size="11" fill="var(--ink)">30</text><text x="34" y="141" text-anchor="end" font-size="11" fill="var(--ink)">35</text><text x="34" y="96" text-anchor="end" font-size="11" fill="var(--ink)">40</text><text x="34" y="51" text-anchor="end" font-size="11" fill="var(--ink)">45</text><text x="60" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">leaving</text><text x="60" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">office</text><text x="105" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">reach</text><text x="105" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">car</text><text x="150" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">exiting</text><text x="150" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">highway</text><text x="195" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">2ndary</text><text x="195" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">road</text><text x="240" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">home</text><text x="240" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">street</text><text x="285" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">arrive</text><text x="285" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">home</text><g stroke="var(--mut)" stroke-width="1" stroke-dasharray="3 3" fill="none"><path d="M60 65H240"/></g><text x="100" y="59" font-size="11" fill="var(--ink)">actual outcome</text><path d="M60 182V67" stroke="#c0392b" stroke-width="1.6" marker-end="url(#mA)"/><path d="M105 92V67" stroke="#c0392b" stroke-width="1.6" marker-end="url(#mA)"/><path d="M150 137V67" stroke="#c0392b" stroke-width="1.6" marker-end="url(#mA)"/><path d="M195 92V67" stroke="#c0392b" stroke-width="1.6" marker-end="url(#mA)"/><polyline points="60,182 105,92 150,137 195,92 240,65 285,65" fill="none" stroke="var(--ink)" stroke-width="2"/><circle cx="60" cy="182" r="4" fill="var(--ink)"/><circle cx="105" cy="92" r="4" fill="var(--ink)"/><circle cx="150" cy="137" r="4" fill="var(--ink)"/><circle cx="195" cy="92" r="4" fill="var(--ink)"/><circle cx="240" cy="65" r="4" fill="var(--ink)"/><circle cx="285" cy="65" r="4" fill="var(--ink)"/></svg></div>
+<div><p class="example-label" style="margin:0 0 4px">TD learning</p><svg viewBox="0 0 340 240" role="img" aria-label="TD learning: each prediction is compared with the next prediction" style="width:100%;display:block;font-family:Newsreader,Georgia,serif"><defs><marker id="mB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#c0392b"/></marker></defs><g stroke="var(--mut)" stroke-width="1.2"><path d="M40 47V200H310"/></g><text x="34" y="186" text-anchor="end" font-size="11" fill="var(--ink)">30</text><text x="34" y="141" text-anchor="end" font-size="11" fill="var(--ink)">35</text><text x="34" y="96" text-anchor="end" font-size="11" fill="var(--ink)">40</text><text x="34" y="51" text-anchor="end" font-size="11" fill="var(--ink)">45</text><text x="60" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">leaving</text><text x="60" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">office</text><text x="105" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">reach</text><text x="105" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">car</text><text x="150" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">exiting</text><text x="150" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">highway</text><text x="195" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">2ndary</text><text x="195" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">road</text><text x="240" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">home</text><text x="240" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">street</text><text x="285" y="215" text-anchor="middle" font-size="9" fill="var(--ink)">arrive</text><text x="285" y="226" text-anchor="middle" font-size="9" fill="var(--ink)">home</text><g stroke="var(--mut)" stroke-width="1" stroke-dasharray="3 3" fill="none"><path d="M60 92H105M105 137H150M150 92H195M195 65H240"/></g><text x="248" y="59" font-size="11" fill="var(--ink)">actual outcome</text><path d="M60 182V94" stroke="#c0392b" stroke-width="1.6" marker-end="url(#mB)"/><path d="M105 92V135" stroke="#c0392b" stroke-width="1.6" marker-end="url(#mB)"/><path d="M150 137V94" stroke="#c0392b" stroke-width="1.6" marker-end="url(#mB)"/><path d="M195 92V67" stroke="#c0392b" stroke-width="1.6" marker-end="url(#mB)"/><polyline points="60,182 105,92 150,137 195,92 240,65 285,65" fill="none" stroke="var(--ink)" stroke-width="2"/><circle cx="60" cy="182" r="4" fill="var(--ink)"/><circle cx="105" cy="92" r="4" fill="var(--ink)"/><circle cx="150" cy="137" r="4" fill="var(--ink)"/><circle cx="195" cy="92" r="4" fill="var(--ink)"/><circle cx="240" cy="65" r="4" fill="var(--ink)"/><circle cx="285" cy="65" r="4" fill="var(--ink)"/></svg></div></div>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure: predicted total travel time (minutes) at each situation, from leaving the office to arriving home</figcaption></figure>
+<p>The figure shows how MC and TD learning update predictions during a journey from the office to home.</p>
+<h4>Left: Monte Carlo learning</h4>
+<ul><li>The person predicts the total journey time at different locations.</li><li>The actual total journey time is 43 minutes.</li><li>Monte Carlo learning waits until the person reaches home before updating earlier predictions.</li><li>Each prediction is compared with the final actual outcome.</li><li>The red arrows show the differences between the predicted journey times and the actual outcome.</li></ul>
+<h4>Right: TD learning</h4>
+<ul><li>TD learning updates predictions during the journey, without waiting to reach home.</li><li>Each prediction is compared with the prediction at the next stage, accounting for any reward or elapsed-time information.</li><li>The red arrows show the one-step prediction differences.</li><li>The prediction is adjusted at each stage using the TD error.</li></ul>
+<p class="note"><b>Note:</b> Monte Carlo learning updates predictions using the final result, whereas TD learning updates predictions step by step using new information obtained during the journey. The graph uses total predicted journey time as a simplified illustration. For the standard TD(0) equation, the reward and discount factor must also be considered when calculating the TD error.</p>
+<h4>Key difference</h4>
+<div class="scroll"><table><thead><tr><th>Monte Carlo learning<th>TD learning</tr></thead><tbody>
+<tr><td>Waits until the journey ends<td>Updates during the journey</tr>
+<tr><td>Uses the final actual outcome<td>Uses the next prediction and immediate feedback</tr>
+<tr><td>Learns from complete returns<td>Learns using bootstrapping</tr>
+<tr><td>Red arrows compare predictions with the final outcome<td>Red arrows compare consecutive predictions</tr></tbody></table></div>
+<h3>Generalized Policy Iteration (GPI) in TD Learning</h3>
+<p>Generalized Policy Iteration involves two interacting processes:</p>
+<ul><li><b>Policy Evaluation (Prediction):</b> Estimate how good the current policy is using a value function.</li><li><b>Policy Improvement (Control):</b> Improve the policy by selecting actions with higher estimated values.</li></ul>
+<p>These processes are repeated so that the agent gradually learns better behavior.</p>
+<p>TD prediction methods perform policy evaluation, while TD control algorithms such as SARSA and Q-learning combine value estimation with policy improvement.</p></section>
 
 <section id="s4"><span class="num">4</span><h2>TD(0) prediction</h2>
 <p>TD(0) is the one-step method for estimating \(V^\pi(s)\) under a given policy \(\pi\).</p>
+<h3>TD prediction</h3>
+<p>TD prediction is the process of estimating the state-value function \(V(s)\) for a given policy using observed rewards and estimated next-state values.</p>
+<ul><li>Monte Carlo methods wait until the episode ends before updating state values using the complete return.</li><li>TD(0) updates the state value after each transition without waiting for the episode to finish.</li><li>TD(0) uses the immediate reward and the estimated value of the next state.</li><li>This process is called <b>one-step bootstrapping</b>.</li></ul>
+<div class="def"><span class="lab">TD(0) update in one line.</span>
+$$\boxed{V(S_t)\leftarrow V(S_t)+\alpha\left[R_{t+1}+\gamma V(S_{t+1})-V(S_t)\right]}$$
+The bracketed term is the TD error \(\delta_t\): the difference between the new one-step TD target and the current value estimate.</div>
 <div class="def"><span class="lab">TD(0) update.</span>
-$$V(S_t)\leftarrow V(S_t)+\alpha\,\delta_t,\qquad \delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t)$$
-\(\delta_t\) is the TD error; \(R_{t+1}+\gamma V(S_{t+1})\) is the TD target. At a terminal state the next-state value is 0.</div>
+$$\boxed{V(S_t)\leftarrow V(S_t)+\alpha\,\delta_t}$$
+where the TD error is
+$$\boxed{\delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t)}$$
+Here:
+<ul><li>\(V(S_t)\): current estimated value.</li><li>\(R_{t+1}\): immediate reward.</li><li>\(V(S_{t+1})\): estimated value of the next state.</li><li>\(\alpha\): learning rate.</li><li>\(\gamma\): discount factor.</li><li>\(\delta_t\): temporal-difference error.</li></ul>
+The TD target is \(R_{t+1}+\gamma V(S_{t+1})\). For a terminal state, the next-state value is taken as zero.</div>
 <div class="example"><p class="example-label">Example: one TD(0) update</p>
 <p>Let \(V(S_t)=10\), \(R_{t+1}=5\), \(V(S_{t+1})=12\), \(\alpha=0.1\), \(\gamma=0.9\).</p>
-$$\text{target}=5+0.9(12)=15.8,\qquad\delta_t=15.8-10=5.8$$
-$$V_{\text{new}}(S_t)=10+0.1(5.8)=10.58$$</div>
-<h3>Advantages</h3>
-<ul><li>Online: updates after every transition.</li><li>No model needed.</li><li>Works for continuing tasks and incomplete episodes.</li><li>Cheap: a simple one-step update.</li></ul>
-<h3>Optimality</h3>
+<p>First, calculate the TD target:</p>
+$$5+0.9(12)=15.8$$
+<p>Then calculate the TD error:</p>
+$$\delta_t=15.8-10=5.8$$
+<p>Update the value:</p>
+$$\boxed{V_{\text{new}}(S_t)=10+0.1(5.8)=10.58}$$
+<p>Therefore, the estimated value increases from 10 to 10.58.</p></div>
+<h3 id="backup">Backup diagram for TD(0)</h3>
+<figure style="margin:24px 0"><svg viewBox="0 0 340 250" role="img" aria-label="TD(0) one-step backup: current state S_t, action A_t shown as a black dot, reward R_t+1, next state S_t+1" style="width:100%;max-width:26rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<circle cx="150" cy="32" r="24" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>
+<circle cx="150" cy="122" r="6" fill="var(--ink)"/>
+<circle cx="150" cy="212" r="24" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>
+<g stroke="var(--ink)" stroke-width="2" fill="none"><path d="M150 56V108M144 98L150 110L156 98"/><path d="M150 128V186M144 176L150 188L156 176"/></g>
+<text x="186" y="37" font-size="14" fill="var(--ink)">Current state Sₜ</text>
+<text x="186" y="127" font-size="14" fill="var(--ink)">Action Aₜ</text>
+<text x="186" y="217" font-size="14" fill="var(--ink)">Next state Sₜ₊₁</text>
+<text x="20" y="162" font-size="14" fill="var(--ink)">Reward Rₜ₊₁</text></svg>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 3: TD(0), one-step backup diagram</figcaption></figure>
+<ul><li><b>Upper open circle:</b> the current state \(S_t\).</li><li><b>Black dot:</b> the action taken.</li><li><b>Lower open circle:</b> the next state \(S_{t+1}\).</li><li><b>Arrow:</b> the sampled transition from the current state to the next state.</li><li><b>Backup:</b> the reward and the estimated value of the next state are used to update the current state’s value.</li></ul>
+<div class="def">$$\boxed{\text{TD Target}=R_{t+1}+\gamma V(S_{t+1})}$$
+This is called a <b>one-step backup</b> because TD(0) looks one transition ahead before updating the current value estimate.</div>
+<h3>Key characteristics of TD(0)</h3>
+<ol class="s"><li><b>Model-free:</b> does not require knowledge of environment transition probabilities.</li><li><b>Online learning:</b> updates estimates after each step.</li><li><b>Bootstrapping:</b> uses the next state’s estimated value to update the current state.</li><li><b>Sampling:</b> learns from actual transitions experienced by the agent.</li><li><b>Policy evaluation:</b> estimates the value function for a given policy.</li><li><b>One-step method:</b> uses one observed reward before bootstrapping.</li><li><b>Computationally efficient:</b> requires relatively simple calculations and little memory.</li></ol>
+<h3>Limitations of TD(0)</h3>
+<ol class="s"><li><b>Bootstrapping bias:</b> updates depend on estimated next-state values, which may initially be inaccurate.</li><li><b>Learning rate sensitivity:</b> an inappropriate learning rate may cause slow or unstable learning.</li><li><b>Slow reward propagation:</b> because TD(0) looks only one step ahead, information from distant rewards may take many updates to reach earlier states.</li><li><b>Convergence conditions:</b> guaranteed convergence requires suitable assumptions, such as sufficient state visits and appropriate learning rates in tabular prediction.</li></ol>
+<h3 id="adv">Advantages of TD Learning</h3>
+<ol class="s"><li><b>Online learning:</b> Can update estimates immediately after each step.</li><li><b>No environment model:</b> Learns directly from interactions.</li><li><b>Faster feedback:</b> Does not need to wait until the end of an episode.</li><li><b>Memory efficient:</b> One-step TD requires only the current transition and value estimates.</li><li><b>Suitable for continuous tasks:</b> Can learn in environments without natural episode endings.</li></ol>
+<h3 id="continuing">TD learning for continuing tasks</h3>
+<p>TD learning is particularly useful for continuing tasks, where the interaction between an agent and its environment does not have a definite ending.</p>
+<ul><li><b>No need for complete episodes:</b> unlike conventional Monte Carlo methods, TD learning can update estimates without waiting for an episode to finish.</li><li><b>Continuous learning:</b> the agent updates its value estimates after every step.</li><li><b>Real-time adaptation:</b> the agent can improve its predictions as new information becomes available.</li></ul>
+<div class="example"><p class="example-label">Example</p><p>A robot operating continuously in a factory can learn from its actions without stopping or completing an episode.</p></div>
+<h3 id="opt">Optimality of TD(0)</h3>
 <ul><li>In a finite Markov reward process, with a fixed policy, suitably diminishing learning rates and enough visits, tabular TD(0) converges to the true \(V^\pi\).</li>
 <li>It is not guaranteed to be most accurate after a limited number of samples.</li>
 <li>Versus Monte Carlo: often lower variance, but bootstrapping can add bias.</li>
 <li>With function approximation, convergence needs extra conditions.</li></ul>
-<p class="note">TD(0) evaluates a policy. It does not by itself find an optimal one.</p></section>
+<p class="note">TD(0) evaluates a policy. It does not by itself find an optimal one.</p>
+<p><b>Conclusion:</b> TD(0) combines the experience-based learning of Monte Carlo methods with the bootstrapping approach of Dynamic Programming. It estimates state values after every transition, making it useful for online policy evaluation in reinforcement learning.</p>
+<h3 id="td1">TD(1) algorithm</h3>
+<div class="def"><span class="lab">Definition.</span> TD(1) is a special case of TD(\(\lambda\)) learning where \(\lambda=1\). It uses eligibility traces to update previously visited states based on their contribution to the current experience.</div>
+<p>Eligibility traces keep track of recently visited states and determine how much each state should be updated.</p>
+<h4>Key features of TD(1)</h4>
+<ol class="s"><li><b>Eligibility traces:</b> maintains a record of previously visited states to determine how much each state should be updated.</li><li><b>Credit assignment:</b> updates previously visited states according to their eligibility traces, allowing rewards to influence earlier states.</li><li><b>Monte Carlo relationship:</b> in episodic tasks, TD(1) is closely related to Monte Carlo learning because it uses information corresponding to complete episode returns.</li><li><b>Online updates:</b> in its backward-view implementation, TD(1) can update state values at every step rather than waiting until the episode ends.</li><li><b>Suitable for episodic tasks:</b> particularly useful when learning from sequences of states and rewards.</li></ol>
+<h4>Working principle</h4>
+<ol class="s"><li>The agent visits a state and performs an action.</li><li>It receives a reward and calculates the TD error.</li><li>An eligibility trace is maintained for each state.</li><li>Recently visited states receive greater credit than states visited further in the past.</li><li>The TD error is used to update the values of states according to their eligibility traces.</li></ol>
+<h4>Eligibility trace equation</h4>
+<p>For a simple accumulating-trace implementation:</p>
+$$e_t(s)=\gamma\lambda e_{t-1}(s)+\mathbb{I}(S_t=s)$$
+<p>For TD(1), \(\lambda=1\):</p>
+<div class="def">$$\boxed{e_t(s)=\gamma e_{t-1}(s)+\mathbb{I}(S_t=s)}$$
+Where:
+<ul><li>\(e_t(s)\): eligibility trace of state \(s\).</li><li>\(\gamma\): discount factor.</li><li>\(\mathbb{I}(S_t=s)\): equals 1 when the current state is \(s\), otherwise 0.</li></ul></div>
+<p>The value update is</p>
+<div class="def">$$\boxed{V(s)\leftarrow V(s)+\alpha\,\delta_t\,e_t(s)}$$
+where \(\delta_t\) is the TD error.</div>
+<div class="example"><p class="example-label">Example</p>
+<p>Consider a robot travelling through three states:</p>
+$$S_1\rightarrow S_2\rightarrow S_3$$
+<p>When the robot receives a reward at \(S_3\), the eligibility traces help assign credit to earlier visited states such as \(S_1\) and \(S_2\). The amount of adjustment depends on each state’s eligibility trace.</p></div>
+<h4>TD(0) vs TD(1)</h4>
+<div class="scroll"><table><thead><tr><th>Feature<th>TD(0)<th>TD(1)</tr></thead><tbody>
+<tr><td>Eligibility traces<td>Not needed<td>Used in backward-view TD(1)</tr>
+<tr><td>States updated per step<td>Current state<td>Current and previously visited states</tr>
+<tr><td>Learning approach<td>One-step bootstrapping<td>Multi-step credit assignment</tr>
+<tr><td>Return relationship<td>One-step TD target<td>Related to Monte Carlo returns in episodic tasks</tr>
+<tr><td>Credit assignment<td>Immediate<td>Extends across multiple time steps</tr>
+<tr><td>Bootstrapping<td>Uses the next-state estimate<td>Closely related to full-return learning</tr>
+<tr><td>Update timing<td>After each transition<td>Can update after each transition</tr>
+<tr><td>Memory requirement<td>Low<td>Higher, because eligibility traces are maintained</tr></tbody></table></div>
+<p class="note"><b>Important clarification:</b> in episodic tabular prediction, conventional accumulating-trace TD(1) is closely related to Monte Carlo learning, but its intermediate online updates are not necessarily identical to ordinary Monte Carlo updates. Also, the discount factor \(\gamma\) causes past eligibility traces to decay even when \(\lambda=1\). TD(1) does not necessarily wait until the end of an episode to update values: the standard backward-view algorithm updates values during the episode, and its relationship with full Monte Carlo returns is most clearly seen through the forward-view interpretation.</p>
+<h4>Technical corrections</h4>
+<ul><li>TD(1) is not always exactly identical to ordinary Monte Carlo learning during training, although they have a close theoretical relationship.</li><li>TD(0) is not generally a maximum-likelihood estimator. The maximum-likelihood (certainty-equivalence) interpretation applies to particular batch-learning settings, not to the ordinary one-step TD(0) update.</li><li>TD(0) may converge slowly in some environments, but a stochastic environment alone does not guarantee slow convergence.</li></ul>
+<p><b>Conclusion:</b> TD(0) learns using the immediate reward and the next-state value, while TD(1) uses eligibility traces to distribute learning updates across previously visited states. Both are TD prediction methods, but they differ in how learning information is assigned to past states.</p>
+</section>
 
 <section id="s5"><span class="num">5</span><h2>SARSA: on-policy TD control</h2>
-<p>SARSA learns action values while following and improving its current policy. The name is the tuple it uses: State, Action, Reward, State, Action.</p>
+<p>SARSA learns action values while following and improving its current policy. SARSA stands for:</p>
+<div class="scroll"><table><thead><tr><th>Letter<th>Stands for</tr></thead><tbody><tr><td>S<td>State</tr><tr><td>A<td>Action</tr><tr><td>R<td>Reward</tr><tr><td>S<td>State</tr><tr><td>A<td>Action</tr></tbody></table></div>
+<p>These are the five quantities \((S_t,A_t,R_{t+1},S_{t+1},A_{t+1})\) used in each update.</p>
 <div class="def"><span class="lab">SARSA update.</span>
 $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)\big]$$
 \(A_{t+1}\) is the action actually chosen by the current policy.</div>
 <ol class="s"><li>Initialize \(Q(s,a)\).</li><li>Observe \(S_t\).</li><li>Choose \(A_t\) with a policy such as \(\varepsilon\)-greedy.</li><li>Act, receive \(R_{t+1}\), observe \(S_{t+1}\).</li><li>Choose \(A_{t+1}\) with the same policy.</li><li>Update \(Q(S_t,A_t)\).</li><li>Repeat until the episode ends.</li></ol>
-<p><b>Why on-policy?</b> It learns the value of the policy that is generating the behaviour. If the agent explores with random actions, SARSA’s values include the effect of that exploration.</p></section>
+<p><b>Why on-policy?</b> It learns the value of the policy that is generating the behavior. If the agent explores with random actions, SARSA’s values include the effect of that exploration.</p></section>
 
 <section id="s6"><span class="num">6</span><h2>Q-learning: off-policy TD control</h2>
 <p>Q-learning learns the optimal action-value function, under suitable conditions, using the best estimated action in the next state.</p>
 <div class="def"><span class="lab">Q-learning update.</span>
 $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[R_{t+1}+\gamma\max_a Q(S_{t+1},a)-Q(S_t,A_t)\big]$$</div>
+<p>The key term is</p>
+$$\max_a Q(S_{t+1},a)$$
+<p>It represents the highest currently estimated action value in the next state.</p>
 <p><b>Why off-policy?</b> Two policies are involved:</p>
 <ul><li><b>Behaviour policy:</b> selects actions, often \(\varepsilon\)-greedy.</li><li><b>Target policy:</b> greedy, \(\pi(s)\in\arg\max_a Q(s,a)\).</li></ul>
 <p>The agent keeps exploring, yet the values it learns are those of the greedy policy.</p>
@@ -177,19 +336,33 @@ $$Q_{\text{new}}=10+0.1[5+0.9(12)-10]=10.58$$
 <p>Instead of one sampled next action, Expected SARSA uses a probability-weighted average over all next actions under a target policy.</p>
 <div class="def"><span class="lab">Expected SARSA update.</span>
 $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\Big[R_{t+1}+\gamma\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)-Q(S_t,A_t)\Big]$$
-It is on-policy or off-policy depending on which policy \(\pi\) is used in the expectation.</div>
-<div class="scroll"><table><thead><tr><th>Algorithm<th>Next-state value used<th>Policy type</tr></thead><tbody>
+where \(\pi(a\mid S_{t+1})\) is the probability of selecting action \(a\) in the next state under the target policy.
+Expected SARSA can be on-policy or off-policy depending on which policy \(\pi\) is used in the expectation.</div>
+<h3>Comparison of SARSA, Q-Learning and Expected SARSA</h3>
+<div class="scroll"><table><thead><tr><th>Algorithm<th>Next-State Value Used<th>Policy Type</tr></thead><tbody>
 <tr><td>SARSA<td>\(Q(S_{t+1},A_{t+1})\)<td>On-policy</tr>
 <tr><td>Q-learning<td>\(\max_aQ(S_{t+1},a)\)<td>Off-policy</tr>
-<tr><td>Expected SARSA<td>\(\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)\)<td>Either</tr></tbody></table></div>
-<p class="note">Remember: SARSA uses the next selected action, Q-learning the best next action, Expected SARSA the weighted average of next actions.</p></section>
+<tr><td>Expected SARSA<td>\(\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)\)<td>On-policy or off-policy</tr></tbody></table></div>
+<p><b>Easy way to remember:</b></p>
+<ul><li>SARSA uses the next selected action.</li><li>Q-learning uses the best estimated next action.</li><li>Expected SARSA uses the weighted average of next actions.</li></ul></section>
 
-<section id="s8"><span class="num">8</span><h2>n-step bootstrapping</h2>
+<section id="s8"><span class="num">8</span><h2>n-Step Bootstrapping</h2>
 <p>One-step TD uses one reward and then bootstraps. Two-step TD uses two rewards, and n-step TD uses \(n\) rewards before bootstrapping from the estimated value after \(n\) steps.</p>
+<h3>Illustration</h3>
+<figure style="margin:24px 0"><svg viewBox="0 0 340 132" role="img" aria-label="States S_t, S_t+1, S_t+2 connected by rewards R_t+1 and R_t+2, with a one-step bootstrap from S_t+1 and a two-step bootstrap from S_t+2" style="width:100%;max-width:32rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<g stroke="var(--mut)" stroke-width="1.4" fill="none" opacity=".9"><path d="M59 35H126M112 31L126 35L112 39"/><path d="M199 35H266M252 31L266 35L252 39"/></g>
+<circle cx="29" cy="35" r="24" fill="var(--card)" stroke="var(--acc)"/><text x="29" y="39" fill="var(--deep2)" text-anchor="middle" font-size="13" font-weight="bold">Sₜ</text>
+<circle cx="160" cy="35" r="24" fill="var(--card)" stroke="var(--acc)"/><text x="160" y="39" fill="var(--deep2)" text-anchor="middle" font-size="13" font-weight="bold">Sₜ₊₁</text>
+<circle cx="300" cy="35" r="24" fill="var(--card)" stroke="var(--acc)"/><text x="300" y="39" fill="var(--deep2)" text-anchor="middle" font-size="13" font-weight="bold">Sₜ₊₂</text>
+<text x="93" y="21" text-anchor="middle" font-size="11" fill="var(--ink)">Rₜ₊₁</text><text x="234" y="21" text-anchor="middle" font-size="11" fill="var(--ink)">Rₜ₊₂</text>
+<path d="M160 63V81" stroke="var(--die)" stroke-width="1.8"/><path d="M300 63V81" stroke="var(--die)" stroke-width="1.8"/>
+<text x="160" y="97" text-anchor="middle" font-size="10" fill="var(--dietxt)">1-step bootstrap</text><text x="289" y="111" text-anchor="middle" font-size="10" fill="var(--dietxt)">2-step bootstrap</text></svg>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 2: Bootstrapping after one or two steps</figcaption></figure>
 <div class="def"><span class="lab">n-step return.</span>
 $$G_{t:t+n}=\sum_{k=1}^{n}\gamma^{k-1}R_{t+k}+\gamma^nV(S_{t+n})$$
 If the episode ends within \(n\) steps, the return contains only the rewards up to termination, with no bootstrapped term.</div>
-<div class="def"><span class="lab">n-step TD prediction.</span> $$V(S_t)\leftarrow V(S_t)+\alpha\big[G_{t:t+n}-V(S_t)\big]$$</div>
+<h3 id="nstd">n-Step TD prediction</h3>
+<div class="def"><span class="lab">Definition.</span> n-Step TD prediction estimates the state-value function using multiple future rewards and a bootstrapped estimate. The update is $$V(S_t)\leftarrow V(S_t)+\alpha\big[G_{t:t+n}-V(S_t)\big]$$</div>
 <div class="example"><p class="example-label">Example: two-step TD</p>
 <p>Let \(R_{t+1}=4\), \(R_{t+2}=6\), \(V(S_{t+2})=10\), \(\gamma=0.9\), \(V(S_t)=12\), \(\alpha=0.1\).</p>
 $$G_{t:t+2}=4+0.9(6)+0.9^2(10)=4+5.4+8.1=17.5$$
@@ -200,15 +373,19 @@ $$V_{\text{new}}(S_t)=12+0.1(17.5-12)=12.55$$</div></section>
 <div class="def"><span class="lab">n-step SARSA.</span>
 $$G_{t:t+n}=\sum_{k=1}^{n}\gamma^{k-1}R_{t+k}+\gamma^nQ(S_{t+n},A_{t+n})$$
 $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[G_{t:t+n}-Q(S_t,A_t)\big]$$
-For \(n=1\) this is ordinary SARSA.</div>
+For \(n=1\), this is the ordinary SARSA update.</div>
 <p>Advantage: reward information propagates back across several state-action pairs faster than with one-step SARSA.</p></section>
 
 <section id="s10"><span class="num">10</span><h2>Off-policy and importance sampling</h2>
-<p>Off-policy learning learns about a <b>target policy</b> \(\pi\) while collecting experience with a different <b>behaviour policy</b> \(b\). When they differ, n-step methods can correct with importance sampling.</p>
-<div class="def"><span class="lab">Importance sampling ratio and update.</span>
-$$\rho_{t+1:t+n-1}=\prod_{k=t+1}^{t+n-1}\frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}$$
-$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\,\rho_{t+1:t+n-1}\big[G_{t:t+n}-Q(S_t,A_t)\big]$$
-This requires \(b\) to give nonzero probability to any action \(\pi\) might take.</div>
+<p>Off-policy learning means learning about a target policy while collecting experience with a different behavior policy. Let:</p>
+<ul><li>\(\pi\): target policy, which the agent wants to evaluate or improve.</li><li>\(b\): behavior policy, which generates the actual actions.</li></ul>
+<p>When \(\pi\) and \(b\) differ, some n-step methods use importance sampling to correct for the difference.</p>
+<h3>Importance sampling ratio</h3>
+<p>For n-step off-policy SARSA, the importance sampling ratio can be written as</p>
+<div class="def">$$\boxed{\rho_{t+1:t+n-1}=\prod_{k=t+1}^{t+n-1}\frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}}$$</div>
+<p>The corresponding update is</p>
+<div class="def">$$\boxed{Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\,\rho_{t+1:t+n-1}\big[G_{t:t+n}-Q(S_t,A_t)\big]}$$</div>
+<p>This requires the behavior policy to assign nonzero probability to actions that the target policy may select in the relevant states.</p>
 <h3>Limitations</h3>
 <ul><li>Ratios can become very large.</li><li>Large ratios raise the variance of updates.</li><li>Learning can turn unstable, especially on long trajectories.</li><li>Multiplying many ratios adds computation.</li></ul></section>
 
@@ -245,9 +422,15 @@ $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[G_{t:t+n}-Q(S_t,A_t)\big]$$
 <ul><li>TD prediction uses the reward plus the next estimated value; TD(0) is one-step.</li>
 <li>SARSA uses the next selected action; Q-learning the maximum next-action value; Expected SARSA an expected value.</li>
 <li>n-step TD uses several rewards before bootstrapping.</li>
-<li>Importance sampling corrects behaviour versus target policy; tree backup avoids it with expected backups.</li></ul></div></section>
+<li>Importance sampling corrects behavior versus target policy; tree backup avoids it with expected backups.</li></ul></div>
+<h3>Applications of Model-Free Control</h3>
+<ul><li><b>Robotics:</b> Robots can learn walking, object manipulation and navigation through trial-and-error interactions.</li><li><b>Games:</b> Model-free algorithms such as DQN have been used to learn Atari video games directly from experience. AlphaGo, however, is not a purely model-free example because it also uses search and planning.</li><li><b>Autonomous Vehicles:</b> Model-free RL can be used to train driving decision policies in simulation. Real-world deployment requires extensive safety validation.</li><li><b>Healthcare:</b> RL can be researched for sequential treatment planning and adaptive decision support. Clinical applications require careful safety and effectiveness evaluation.</li></ul>
+<h3>Conclusion</h3>
+<p>Temporal-Difference Learning is an important model-free reinforcement learning method that combines learning from experience with bootstrapping.</p>
+<p>It improves value estimates using the immediate reward and the estimated value of the next state, allowing learning without waiting for an entire episode to finish.</p>
+<p>TD learning provides the foundation for important control algorithms such as SARSA, Q-learning and Expected SARSA.</p></section>
 <section id="lab"><span class="num">13</span><h2>Update-rule lab</h2>
-<p>One transition, three update rules. Move the sliders and compare how SARSA, Q-learning and Expected SARSA use the same next-state action values. The behaviour policy is ε-greedy over three actions; SARSA uses the action you pick as the one actually taken next.</p>
+<p>One transition, three update rules. Move the sliders and compare how SARSA, Q-learning and Expected SARSA use the same next-state action values. The behavior policy is ε-greedy over three actions; SARSA uses the action you pick as the one actually taken next.</p>
 <div id="lrows"></div>
 <div class="lsel"><label for="nx">Next action actually taken, A′ </label><select id="nx"><option value="0">a1</option><option value="1">a2</option><option value="2">a3</option></select></div>
 <div class="scroll"><table id="lt"><thead><tr><th>Algorithm<th>Next-state value<th>TD target<th>New Q(S,A)</tr></thead><tbody></tbody></table></div>
@@ -272,12 +455,12 @@ draw();
 <details><summary>What is the TD error in TD(0)?</summary><p>\(\delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t)\): the TD target minus the current estimate.</p></details>
 <details><summary>Why is SARSA on-policy and Q-learning off-policy?</summary><p>SARSA bootstraps from the action the current policy actually takes next, so it learns that policy’s values. Q-learning bootstraps from the maximum next value, so it learns the greedy policy while behaving differently.</p></details>
 <details><summary>When does Expected SARSA equal Q-learning?</summary><p>When the target policy in the expectation is greedy, since the weighted average then collapses to the maximum.</p></details>
-<details><summary>What problem does importance sampling solve, and what is its cost?</summary><p>It corrects for the mismatch between behaviour and target policies, but long products of ratios can be huge, giving high variance and instability.</p></details>
+<details><summary>What problem does importance sampling solve, and what is its cost?</summary><p>It corrects for the mismatch between behavior and target policies, but long products of ratios can be huge, giving high variance and instability.</p></details>
 <details><summary>How does tree backup avoid importance sampling?</summary><p>It weights the values of all actions by their target-policy probabilities and continues only along the sampled action, so no ratios are multiplied.</p></details></section>
 
-<nav class="pager" aria-label="Next module"><a href="module5.html"><small>Next module</small><span>Module 5 →</span></a></nav>
+<nav class="pager" aria-label="Next module"><a href="https://leenasilvoster.github.io/Reinforcement_Learning/Module_5.html"><small>Next module</small><span>Module 5 →</span></a></nav>
 </main>
-<footer><span>CST497 — Reinforcement Learning · Module 4</span><span><a href="module3.html">← Module 3</a> · <a href="module5.html">Module 5 →</a></span></footer>
+<footer><span>CST497 — Reinforcement Learning · Module 4</span><span><a href="https://leenasilvoster.github.io/Reinforcement_Learning/Module_3.html">← Module 3</a> · <a href="https://leenasilvoster.github.io/Reinforcement_Learning/Module_5.html">Module 5 →</a></span></footer>
 </div>
 <script>
 const ls=[...document.querySelectorAll('nav a')];
