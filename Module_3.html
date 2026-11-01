@@ -216,7 +216,7 @@ $$G_t=R_{t+1}+\gamma R_{t+2}+\gamma^2R_{t+3}+\cdots$$
 <p>TD prediction methods perform policy evaluation, while TD control algorithms such as SARSA and Q-learning combine value estimation with policy improvement.</p></section>
 
 <section id="s4"><span class="num">4</span><h2>TD(0) prediction</h2>
-<p>TD(0) is the one-step method for estimating \(V^\pi(s)\) under a given policy \(\pi\).</p>
+<p>TD(0) is the one-step method for estimating \(V^\pi(s)\) under a given policy \(\pi\). It is called a one-step TD method because it uses one observed transition before updating the value function.</p>
 <h3>TD prediction</h3>
 <p>TD prediction is the process of estimating the state-value function \(V(s)\) for a given policy using observed rewards and estimated next-state values.</p>
 <ul><li>Monte Carlo methods wait until the episode ends before updating state values using the complete return.</li><li>TD(0) updates the state value after each transition without waiting for the episode to finish.</li><li>TD(0) uses the immediate reward and the estimated value of the next state.</li><li>This process is called <b>one-step bootstrapping</b>.</li></ul>
@@ -254,7 +254,7 @@ $$\boxed{V_{\text{new}}(S_t)=10+0.1(5.8)=10.58}$$
 <div class="def">$$\boxed{\text{TD Target}=R_{t+1}+\gamma V(S_{t+1})}$$
 This is called a <b>one-step backup</b> because TD(0) looks one transition ahead before updating the current value estimate.</div>
 <h3>Key characteristics of TD(0)</h3>
-<ol class="s"><li><b>Model-free:</b> does not require knowledge of environment transition probabilities.</li><li><b>Online learning:</b> updates estimates after each step.</li><li><b>Bootstrapping:</b> uses the next state’s estimated value to update the current state.</li><li><b>Sampling:</b> learns from actual transitions experienced by the agent.</li><li><b>Policy evaluation:</b> estimates the value function for a given policy.</li><li><b>One-step method:</b> uses one observed reward before bootstrapping.</li><li><b>Computationally efficient:</b> requires relatively simple calculations and little memory.</li></ol>
+<ol class="s"><li><b>Single-step update:</b> updates the value of the current state after each transition.</li><li><b>Model-free:</b> does not require knowledge of environment transition probabilities.</li><li><b>Online learning:</b> updates estimates after each step.</li><li><b>Bootstrapping:</b> uses the next state’s estimated value to update the current state.</li><li><b>Sampling:</b> learns from actual transitions experienced by the agent.</li><li><b>Policy evaluation:</b> estimates the value function for a given policy.</li><li><b>One-step method:</b> uses one observed reward before bootstrapping.</li><li><b>Computationally efficient:</b> requires relatively simple calculations and little memory.</li></ol>
 <h3>Limitations of TD(0)</h3>
 <ol class="s"><li><b>Bootstrapping bias:</b> updates depend on estimated next-state values, which may initially be inaccurate.</li><li><b>Learning rate sensitivity:</b> an inappropriate learning rate may cause slow or unstable learning.</li><li><b>Slow reward propagation:</b> because TD(0) looks only one step ahead, information from distant rewards may take many updates to reach earlier states.</li><li><b>Convergence conditions:</b> guaranteed convergence requires suitable assumptions, such as sufficient state visits and appropriate learning rates in tabular prediction.</li></ol>
 <h3 id="adv">Advantages of TD Learning</h3>
@@ -291,6 +291,15 @@ where \(\delta_t\) is the TD error.</div>
 <p>Consider a robot travelling through three states:</p>
 $$S_1\rightarrow S_2\rightarrow S_3$$
 <p>When the robot receives a reward at \(S_3\), the eligibility traces help assign credit to earlier visited states such as \(S_1\) and \(S_2\). The amount of adjustment depends on each state’s eligibility trace.</p></div>
+<p>When the agent receives new rewards, TD(1) uses eligibility traces to distribute the resulting learning updates among the states visited earlier.</p>
+<figure style="margin:24px 0"><svg viewBox="0 0 340 135" role="img" aria-label="States S1, S2, S3 connected by rewards R2 and R3; a dashed bracket below shows that learning updates can affect earlier states" style="width:100%;max-width:30rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<g stroke="var(--ink)" stroke-width="1.6" fill="none"><path d="M71 40H142M133 35L143 40L133 45"/><path d="M196 40H267M258 35L268 40L258 45"/></g>
+<g fill="var(--soft)" stroke="var(--acc)" stroke-width="1.8"><circle cx="45" cy="40" r="26"/><circle cx="170" cy="40" r="26"/><circle cx="295" cy="40" r="26"/></g>
+<g fill="var(--deep2)" font-size="15" font-weight="bold" text-anchor="middle"><text x="45" y="45">S₁</text><text x="170" y="45">S₂</text><text x="295" y="45">S₃</text></g>
+<g fill="var(--ink)" font-size="12" text-anchor="middle"><text x="107" y="27">R₂</text><text x="232" y="27">R₃</text></g>
+<path d="M45 72V100H295V72" stroke="var(--acc)" stroke-width="1.6" stroke-dasharray="5 4" fill="none"/>
+<text x="170" y="123" text-anchor="middle" font-size="12" fill="var(--acc)">Learning updates can affect earlier states</text></svg>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure: TD(1) credit assignment across earlier states</figcaption></figure>
 <h4>TD(0) vs TD(1)</h4>
 <div class="scroll"><table><thead><tr><th>Feature<th>TD(0)<th>TD(1)</tr></thead><tbody>
 <tr><td>Eligibility traces<td>Not needed<td>Used in backward-view TD(1)</tr>
@@ -300,7 +309,8 @@ $$S_1\rightarrow S_2\rightarrow S_3$$
 <tr><td>Credit assignment<td>Immediate<td>Extends across multiple time steps</tr>
 <tr><td>Bootstrapping<td>Uses the next-state estimate<td>Closely related to full-return learning</tr>
 <tr><td>Update timing<td>After each transition<td>Can update after each transition</tr>
-<tr><td>Memory requirement<td>Low<td>Higher, because eligibility traces are maintained</tr></tbody></table></div>
+<tr><td>Memory requirement<td>Low<td>Higher, because eligibility traces are maintained</tr>
+<tr><td>Relationship to MC<td>Different from MC<td>Closely related to episodic MC</tr></tbody></table></div>
 <p class="note"><b>Important clarification:</b> in episodic tabular prediction, conventional accumulating-trace TD(1) is closely related to Monte Carlo learning, but its intermediate online updates are not necessarily identical to ordinary Monte Carlo updates. Also, the discount factor \(\gamma\) causes past eligibility traces to decay even when \(\lambda=1\). TD(1) does not necessarily wait until the end of an episode to update values: the standard backward-view algorithm updates values during the episode, and its relationship with full Monte Carlo returns is most clearly seen through the forward-view interpretation.</p>
 <h4>Technical corrections</h4>
 <ul><li>TD(1) is not always exactly identical to ordinary Monte Carlo learning during training, although they have a close theoretical relationship.</li><li>TD(0) is not generally a maximum-likelihood estimator. The maximum-likelihood (certainty-equivalence) interpretation applies to particular batch-learning settings, not to the ordinary one-step TD(0) update.</li><li>TD(0) may converge slowly in some environments, but a stochastic environment alone does not guarantee slow convergence.</li></ul>
@@ -308,65 +318,357 @@ $$S_1\rightarrow S_2\rightarrow S_3$$
 </section>
 
 <section id="s5"><span class="num">5</span><h2>SARSA: on-policy TD control</h2>
-<p>SARSA learns action values while following and improving its current policy. SARSA stands for:</p>
-<div class="scroll"><table><thead><tr><th>Letter<th>Stands for</tr></thead><tbody><tr><td>S<td>State</tr><tr><td>A<td>Action</tr><tr><td>R<td>Reward</tr><tr><td>S<td>State</tr><tr><td>A<td>Action</tr></tbody></table></div>
-<p>These are the five quantities \((S_t,A_t,R_{t+1},S_{t+1},A_{t+1})\) used in each update.</p>
+<p>SARSA (State–Action–Reward–State–Action) is a model-free, on-policy Temporal-Difference (TD) control algorithm used to learn and improve an action-selection policy. It estimates the action-value function \(Q(s,a)\) using the reward received and the Q-value of the next action selected by the current policy.</p>
+<h3>Key characteristics</h3>
+<ul><li><b>Model-free:</b> does not require a model of the environment.</li><li><b>On-policy:</b> learns the action values of the policy currently being followed.</li><li><b>Value-based:</b> maintains Q-values for state-action pairs.</li><li><b>TD learning:</b> updates action values using immediate rewards and estimated future values.</li><li><b>Bootstrapping:</b> uses the estimated Q-value of the next selected action.</li><li><b>Exploration:</b> often uses an \(\varepsilon\)-greedy policy to balance exploration and exploitation.</li></ul>
+<h3>Why is SARSA called on-policy?</h3>
+<p>In on-policy learning, the agent learns the value of the same policy it uses to select actions. If the agent explores with random actions, SARSA’s values include the effect of that exploration.</p>
+<p>For example, a robot uses an \(\varepsilon\)-greedy policy to explore different routes. SARSA updates its Q-values based on the next action selected by that policy, including exploratory actions. This differs from Q-learning, which updates using the maximum estimated next-state Q-value.</p>
+<div class="def"><span class="lab">Key difference.</span><ul><li><b>SARSA:</b> learns using the next action selected by the current policy.</li><li><b>Q-learning:</b> learns using the highest estimated Q-value in the next state.</li></ul></div>
+<h3>Working principle of SARSA</h3>
+<p>SARSA gets its name from the five elements involved in each update.</p>
+<figure style="margin:20px 0"><svg viewBox="0 0 340 120" role="img" aria-label="SARSA five elements: state, action, reward, next state, next action" style="width:100%;max-width:32rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif"><g stroke="var(--ink)" stroke-width="1.5" fill="none"><path d="M55 34H75M69 30L76 34L69 38"/><path d="M124 34H144M138 30L145 34L138 38"/><path d="M193 34H213M207 30L214 34L207 38"/><path d="M262 34H282M276 30L283 34L276 38"/></g><circle cx="32" cy="34" r="22" fill="var(--soft)" stroke="var(--acc)" stroke-width="1.8"/><text x="32" y="40" text-anchor="middle" font-size="17" font-weight="bold" fill="var(--deep2)">S</text><text x="32" y="78" text-anchor="middle" font-size="10.5" fill="var(--ink)">State</text><circle cx="101" cy="34" r="22" fill="var(--soft)" stroke="var(--acc)" stroke-width="1.8"/><text x="101" y="40" text-anchor="middle" font-size="17" font-weight="bold" fill="var(--deep2)">A</text><text x="101" y="78" text-anchor="middle" font-size="10.5" fill="var(--ink)">Action</text><circle cx="170" cy="34" r="22" fill="var(--card)" stroke="var(--die)" stroke-width="1.8"/><text x="170" y="40" text-anchor="middle" font-size="17" font-weight="bold" fill="var(--deep2)">R</text><text x="170" y="78" text-anchor="middle" font-size="10.5" fill="var(--ink)">Reward</text><circle cx="239" cy="34" r="22" fill="var(--soft)" stroke="var(--acc)" stroke-width="1.8"/><text x="239" y="40" text-anchor="middle" font-size="17" font-weight="bold" fill="var(--deep2)">S</text><text x="239" y="78" text-anchor="middle" font-size="10.5" fill="var(--ink)">Next State</text><circle cx="308" cy="34" r="22" fill="var(--soft)" stroke="var(--acc)" stroke-width="1.8"/><text x="308" y="40" text-anchor="middle" font-size="17" font-weight="bold" fill="var(--deep2)">A</text><text x="308" y="78" text-anchor="middle" font-size="10.5" fill="var(--ink)">Next Action</text><text x="170" y="106" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--deep2)">(Sₜ, Aₜ, Rₜ₊₁, Sₜ₊₁, Aₜ₊₁)</text></svg><figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Five elements used in the SARSA update</figcaption></figure>
+<ol class="s"><li><b>State (\(S_t\)):</b> the current state of the agent.</li><li><b>Action (\(A_t\)):</b> the action taken in the current state.</li><li><b>Reward (\(R_{t+1}\)):</b> the reward obtained after the action.</li><li><b>Next state (\(S_{t+1}\)):</b> the new state reached.</li><li><b>Next action (\(A_{t+1}\)):</b> the next action selected using the current policy.</li></ol>
+<p>SARSA uses these five elements to update the estimated Q-value.</p>
+<h3>SARSA update equation</h3>
 <div class="def"><span class="lab">SARSA update.</span>
-$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)\big]$$
+$$\boxed{Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\left[R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)\right]}$$
 \(A_{t+1}\) is the action actually chosen by the current policy.</div>
-<ol class="s"><li>Initialize \(Q(s,a)\).</li><li>Observe \(S_t\).</li><li>Choose \(A_t\) with a policy such as \(\varepsilon\)-greedy.</li><li>Act, receive \(R_{t+1}\), observe \(S_{t+1}\).</li><li>Choose \(A_{t+1}\) with the same policy.</li><li>Update \(Q(S_t,A_t)\).</li><li>Repeat until the episode ends.</li></ol>
-<p><b>Why on-policy?</b> It learns the value of the policy that is generating the behavior. If the agent explores with random actions, SARSA’s values include the effect of that exploration.</p></section>
+<div class="scroll"><table><thead><tr><th>Symbol<th>Meaning</tr></thead><tbody>
+<tr><td>\(Q(S_t,A_t)\)<td>Current action-value estimate</tr><tr><td>\(\alpha\)<td>Learning rate</tr><tr><td>\(R_{t+1}\)<td>Immediate reward</tr><tr><td>\(\gamma\)<td>Discount factor</tr><tr><td>\(S_{t+1}\)<td>Next state</tr><tr><td>\(A_{t+1}\)<td>Next action selected by the current policy</tr><tr><td>\(Q(S_{t+1},A_{t+1})\)<td>Estimated Q-value of the next selected action</tr></tbody></table></div>
+<p>The expression inside the square brackets is the TD error.</p>
+<div class="def">$$\boxed{\delta_t=R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)}$$
+Therefore, $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\,\delta_t$$
+For a terminal next state, the next-action Q-value term is taken as zero.</div>
+<h3>SARSA algorithm</h3>
+<ol class="s"><li><b>Initialize Q-values:</b> initialize \(Q(s,a)\) for all state-action pairs, commonly to zero.</li><li><b>Start an episode:</b> observe the initial state \(S_t\).</li><li><b>Select an action:</b> choose \(A_t\) according to the current policy, such as \(\varepsilon\)-greedy.</li><li><b>Perform the action:</b> execute \(A_t\), receive reward \(R_{t+1}\), and observe the next state \(S_{t+1}\).</li><li><b>Select the next action:</b> if the next state is nonterminal, select \(A_{t+1}\) using the current policy.</li><li><b>Update the Q-value:</b> update \(Q(S_t,A_t)\) using the SARSA equation. For terminal transitions, use zero as the next-state contribution.</li><li><b>Move on:</b> set \(S_t\leftarrow S_{t+1}\) and \(A_t\leftarrow A_{t+1}\).</li><li><b>Repeat:</b> continue until the episode ends, and repeat for many episodes to improve the Q-value estimates and the policy.</li></ol>
+<h3>Numerical example of SARSA</h3>
+<div class="example"><p class="example-label">Robot moving through a grid</p>
+<p>Suppose \(Q(S_t,A_t)=10\) and \(R_{t+1}=5\). The next action selected by the current policy has \(Q(S_{t+1},A_{t+1})=8\). Let \(\alpha=0.1\) and \(\gamma=0.9\).</p>
+$$Q_{\text{new}}=10+0.1[5+0.9(8)-10]=10+0.1[5+7.2-10]=10+0.1(2.2)$$
+$$\boxed{Q_{\text{new}}=10.22}$$
+<p>Therefore, the estimated Q-value increases from 10 to 10.22.</p></div>
+<p class="note"><b>Important:</b> SARSA uses the Q-value of the next action selected by the policy, even if another action has a higher Q-value.</p>
+<h3>Example: SARSA in gridworld</h3>
+<p>Consider an agent moving through a grid to reach a goal while avoiding obstacles. Assume the following reward structure:</p>
+<ul><li>Reaching the goal: +10</li><li>Each ordinary move: −1</li><li>Entering an obstacle cell: −10 and the episode ends</li></ul>
+<figure style="margin:20px 0"><svg viewBox="0 0 242 184" role="img" aria-label="Illustrative 3 by 4 gridworld with a start cell, two obstacle cells marked X, and a goal cell" style="width:100%;max-width:20rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif"><rect x="8" y="6" width="52" height="52" rx="6" fill="var(--soft)" stroke="var(--rule)" stroke-width="1.5"/><text x="34" y="37" text-anchor="middle" font-size="14" font-weight="bold" fill="var(--deep2)">Start</text><rect x="66" y="6" width="52" height="52" rx="6" fill="var(--card)" stroke="var(--rule)" stroke-width="1.5"/><rect x="124" y="6" width="52" height="52" rx="6" fill="var(--card)" stroke="var(--rule)" stroke-width="1.5"/><rect x="182" y="6" width="52" height="52" rx="6" fill="var(--card)" stroke="var(--rule)" stroke-width="1.5"/><rect x="8" y="64" width="52" height="52" rx="6" fill="var(--card)" stroke="var(--rule)" stroke-width="1.5"/><rect x="66" y="64" width="52" height="52" rx="6" fill="var(--card)" stroke="var(--rule)" stroke-width="1.5"/><rect x="124" y="64" width="52" height="52" rx="6" fill="var(--soft2)" stroke="var(--rule)" stroke-width="1.5"/><text x="150" y="95" text-anchor="middle" font-size="17" font-weight="normal" fill="#b04a3d">X</text><rect x="182" y="64" width="52" height="52" rx="6" fill="var(--card)" stroke="var(--rule)" stroke-width="1.5"/><rect x="8" y="122" width="52" height="52" rx="6" fill="var(--card)" stroke="var(--rule)" stroke-width="1.5"/><rect x="66" y="122" width="52" height="52" rx="6" fill="var(--soft2)" stroke="var(--rule)" stroke-width="1.5"/><text x="92" y="153" text-anchor="middle" font-size="17" font-weight="normal" fill="#b04a3d">X</text><rect x="124" y="122" width="52" height="52" rx="6" fill="var(--card)" stroke="var(--rule)" stroke-width="1.5"/><rect x="182" y="122" width="52" height="52" rx="6" fill="var(--card)" stroke="var(--die)" stroke-width="1.5"/><text x="208" y="153" text-anchor="middle" font-size="14" font-weight="bold" fill="var(--deep2)">Goal</text></svg><figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Illustrative 3 × 4 gridworld</figcaption></figure>
+<p>The agent uses an \(\varepsilon\)-greedy policy to choose actions. At each step, SARSA updates its Q-value using the reward and the Q-value of the next action selected by that policy. Over repeated episodes, the agent can learn a route to the goal while accounting for the possibility of exploratory moves.</p>
+<h3>Advantages of SARSA</h3>
+<ol class="s"><li><b>Model-free:</b> does not require an explicit environment model.</li><li><b>On-policy learning:</b> learns values for the policy actually followed during training.</li><li><b>Online updates:</b> updates Q-values after each transition.</li><li><b>Exploration-aware learning:</b> accounts for the effects of exploratory actions in value estimates.</li><li><b>Simple implementation:</b> tabular SARSA is relatively easy to implement for small, discrete environments.</li></ol>
+<h3>Disadvantages of SARSA</h3>
+<ol class="s"><li><b>Exploration dependence:</b> performance depends on the policy used to select actions.</li><li><b>Sample inefficiency:</b> may require many interactions to learn accurate values.</li><li><b>Large state spaces:</b> a Q-table becomes impractical when there are too many states or actions.</li><li><b>Learning rate sensitivity:</b> poor learning-rate selection can slow or destabilize learning.</li><li><b>Optimality conditions:</b> convergence to an optimal policy requires suitable exploration and learning-rate conditions; it is not guaranteed for every fixed exploratory policy.</li></ol>
+<h3>Applications of SARSA</h3>
+<div class="scroll"><table><thead><tr><th>Application<th>Example</tr></thead><tbody>
+<tr><td>Robotics<td>Learning navigation and movement policies</tr><tr><td>Game playing<td>Improving action selection through repeated games</tr><tr><td>Resource management<td>Learning sequential resource-allocation decisions</tr><tr><td>Traffic routing<td>Learning route choices under changing conditions</tr><tr><td>Gridworld problems<td>Finding rewarding routes while avoiding penalties</tr></tbody></table></div>
+<h3>SARSA vs Q-learning</h3>
+<div class="scroll"><table><thead><tr><th>Feature<th>SARSA<th>Q-learning</tr></thead><tbody>
+<tr><td>Policy type<td>On-policy<td>Off-policy</tr>
+<tr><td>Next-state value<td>Q-value of next selected action<td>Maximum estimated next-state Q-value</tr>
+<tr><td>Exploration effect<td>Directly reflected in learned values<td>Greedy backup does not include the next exploratory action</tr>
+<tr><td>Policy evaluation<td>Evaluates the policy being followed<td>Learns toward the greedy target policy</tr>
+<tr><td>Risk handling<td>Can learn safer routes when exploration makes risky routes costly<td>May prefer high-value routes assuming greedy future actions</tr>
+<tr><td>Convergence<td>Can converge to an optimal policy under suitable GLIE and step-size conditions<td>Can converge to optimal Q-values under suitable tabular conditions</tr></tbody></table></div>
+<p class="note">SARSA is not inherently more stable or slower than Q-learning in every environment. Their performance depends on the task, exploration policy and learning parameters.</p>
+<h3>Conclusion</h3>
+<p>SARSA is a model-free, on-policy TD control algorithm that learns action values through interaction with the environment.</p>
+<p>It updates the Q-value using the immediate reward and the estimated Q-value of the next action selected by its current policy.</p>
+<p>The most important feature of SARSA is that it learns about the policy it actually follows, unlike Q-learning, which uses the best estimated next action in its update.</p></section>
 
 <section id="s6"><span class="num">6</span><h2>Q-learning: off-policy TD control</h2>
-<p>Q-learning learns the optimal action-value function, under suitable conditions, using the best estimated action in the next state.</p>
+<p>Q-learning is a model-free, off-policy Temporal-Difference (TD) control algorithm used to learn the best action to take in each state. It learns an action-value function \(Q(s,a)\), which estimates the expected cumulative future reward obtained by taking action \(a\) in state \(s\) and then following a suitable policy. The main objective is to learn the optimal action-value function \(Q^*(s,a)\) and derive an optimal policy, using the best estimated action in the next state (under suitable conditions).</p>
+<h3>Key characteristics</h3>
+<ul><li><b>Model-free:</b> does not require a model of the environment’s transition probabilities or reward function.</li><li><b>Off-policy:</b> learns about the greedy target policy while actions can be selected using a different exploratory behavior policy.</li><li><b>Value-based:</b> learns Q-values to determine which actions are better.</li><li><b>TD learning:</b> updates Q-values using the immediate reward and estimated future Q-values.</li><li><b>Bootstrapping:</b> uses estimated next-state action values to update the current Q-value.</li></ul>
+<h3>Q-value and Q-table</h3>
+<h4>What is a Q-value?</h4>
+<p>A Q-value represents the estimated cumulative future reward of taking a particular action in a particular state.</p>
+$$Q(s,a)$$
+<p>where:</p>
+<ul><li>\(s\): current state</li><li>\(a\): action selected</li><li>\(Q(s,a)\): estimated action value</li></ul>
+<p>A higher Q-value generally indicates a more desirable action.</p>
+<h4>What is a Q-table?</h4>
+<p>A Q-table stores the Q-values of all state-action pairs in a finite environment.</p>
+<ul><li>Rows represent states.</li><li>Columns represent actions.</li><li>Each cell contains \(Q(s,a)\).</li></ul>
+<div class="example"><p class="example-label">Example of a Q-table</p>
+<div class="scroll" style="margin:0 0 12px"><table><thead><tr><th>State<th>Up<th>Down<th>Left<th>Right</tr></thead><tbody>
+<tr><td>S1<td>0<td>0<td>0<td>0</tr><tr><td>S2<td>0<td>0<td>0<td>0</tr><tr><td>S3<td>0<td>0<td>0<td>0</tr><tr><td>S4<td>0<td>0<td>0<td>0</tr></tbody></table></div>
+<p>Initially, all values may be set to zero. As the agent interacts with the environment, Q-values are updated based on rewards and estimated future action values.</p></div>
+<p>After sufficient learning, the agent can select a greedy action using</p>
+<div class="def">$$\boxed{a^*\in\arg\max_a Q(s,a)}$$
+where \(a^*\) is an action with the highest estimated Q-value in state \(s\).</div>
+<h3>Bellman optimality equation</h3>
+<p>The Bellman optimality equation describes the relationship between the optimal Q-value of a state-action pair and the optimal Q-values of possible next states.</p>
+<div class="def">$$\boxed{Q^*(s,a)=\mathbb{E}\left[R_{t+1}+\gamma\max_{a'}Q^*(S_{t+1},a')\mid S_t=s,A_t=a\right]}$$
+where:
+<ul><li>\(Q^*(s,a)\): optimal action value.</li><li>\(R_{t+1}\): immediate reward.</li><li>\(\gamma\): discount factor.</li><li>\(S_{t+1}\): next state.</li><li>\(\max_{a'}Q^*(S_{t+1},a')\): highest optimal Q-value in the next state.</li><li>\(\mathbb{E}\): expected value over possible environment outcomes.</li></ul></div>
+<p class="note"><b>Key idea:</b> the optimal Q-value depends on the immediate reward and the expected discounted value of the best future action.</p>
+<h3>Q-learning update rule</h3>
+<p>Q-learning updates the estimated Q-value after observing each transition.</p>
 <div class="def"><span class="lab">Q-learning update.</span>
 $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\big[R_{t+1}+\gamma\max_a Q(S_{t+1},a)-Q(S_t,A_t)\big]$$</div>
 <p>The key term is</p>
 $$\max_a Q(S_{t+1},a)$$
 <p>It represents the highest currently estimated action value in the next state.</p>
-<p><b>Why off-policy?</b> Two policies are involved:</p>
-<ul><li><b>Behaviour policy:</b> selects actions, often \(\varepsilon\)-greedy.</li><li><b>Target policy:</b> greedy, \(\pi(s)\in\arg\max_a Q(s,a)\).</li></ul>
+<div class="scroll"><table><thead><tr><th>Symbol<th>Meaning</tr></thead><tbody>
+<tr><td>\(Q(S_t,A_t)\)<td>Current Q-value</tr><tr><td>\(\alpha\)<td>Learning rate</tr><tr><td>\(R_{t+1}\)<td>Immediate reward</tr><tr><td>\(\gamma\)<td>Discount factor</tr><tr><td>\(S_{t+1}\)<td>Next state</tr><tr><td>\(\max_{a'}Q(S_{t+1},a')\)<td>Maximum estimated Q-value of the next state</tr></tbody></table></div>
+<p>The expression inside the square brackets is the TD error for Q-learning.</p>
+<div class="def">$$\boxed{\delta_t=R_{t+1}+\gamma\max_{a'}Q(S_{t+1},a')-Q(S_t,A_t)}$$
+Therefore, the update can also be written as $$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\,\delta_t$$
+For a terminal next state, the future Q-value contribution is zero.</div>
+<h4>Importance of learning rate and discount factor</h4>
+<p><b>Learning rate (\(\alpha\))</b></p>
+<ul><li>Controls how strongly new information changes the Q-value.</li><li>A small learning rate produces smaller updates.</li><li>A large learning rate gives more importance to recent information.</li></ul>
+<p><b>Discount factor (\(\gamma\))</b></p>
+<ul><li>Determines the importance of future rewards.</li><li>If \(\gamma=0\), only immediate rewards are considered.</li><li>If \(\gamma\) is close to 1, future rewards receive greater importance.</li></ul>
+<p><b>Why off-policy?</b> Q-learning is called off-policy because the agent can learn about an optimal greedy policy while following a different policy to collect experience. It involves two policies:</p>
+<ul><li><b>Behaviour policy:</b> used to choose actions during learning, often \(\varepsilon\)-greedy.</li><li><b>Target policy:</b> the greedy policy whose action values Q-learning aims to learn, \(\pi(s)\in\arg\max_a Q(s,a)\).</li></ul>
 <p>The agent keeps exploring, yet the values it learns are those of the greedy policy.</p>
+<p>For example, a robot may explore different routes using an \(\varepsilon\)-greedy behavior policy. However, its Q-value update uses the highest estimated next-state action value, regardless of which action it will actually take next. This is the important difference between Q-learning and on-policy TD control methods such as SARSA.</p>
 <div class="example"><p class="example-label">Example: one Q-learning update</p>
 <p>Let \(Q(S_t,A_t)=10\), \(R_{t+1}=5\), \(\max_aQ(S_{t+1},a)=12\), \(\alpha=0.1\), \(\gamma=0.9\).</p>
 $$Q_{\text{new}}=10+0.1[5+0.9(12)-10]=10.58$$
-<p>The value rises because the target (15.8) exceeds the old estimate.</p></div></section>
+<p>The value rises because the target (15.8) exceeds the old estimate.</p></div>
+<h3>Basic working of Q-learning</h3>
+<p>Consider a robot learning to find the shortest route to a destination.</p>
+<ul><li><b>Agent:</b> the robot.</li><li><b>Environment:</b> rooms or a grid containing different paths.</li><li><b>State:</b> current location of the robot.</li><li><b>Action:</b> move up, down, left or right.</li><li><b>Reward:</b> feedback received after moving.</li><li><b>Goal:</b> reach the destination while maximizing cumulative rewards.</li></ul>
+<p>The robot initially does not know which actions are best. It explores the environment, receives rewards and gradually learns which actions lead to better outcomes.</p>
+<h4>Q-learning process</h4>
+<figure style="margin:24px 0"><svg viewBox="0 0 340 480" role="img" aria-label="Q-learning flowchart: initialize Q-table, observe state, choose action epsilon-greedy, take action and observe reward and next state, update Q, check if episode has ended; no loops back to choose action, yes starts a new episode" style="width:100%;max-width:24rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif"><defs><marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker><marker id="fb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--acc)"/></marker></defs><rect x="70" y="8" width="210" height="38" rx="6" fill="var(--card)" stroke="var(--acc)" stroke-width="1.4"/><text x="175" y="32" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--deep2)">Initialize Q-table</text><path d="M175 46V70" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#fa)"/><rect x="70" y="72" width="210" height="38" rx="6" fill="var(--card)" stroke="var(--acc)" stroke-width="1.4"/><text x="175" y="96" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--deep2)">Observe current state Sₜ</text><path d="M175 110V134" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#fa)"/><rect x="70" y="136" width="210" height="38" rx="6" fill="var(--card)" stroke="var(--acc)" stroke-width="1.4"/><text x="175" y="160" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--deep2)">Choose action Aₜ (ε-greedy)</text><path d="M175 174V198" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#fa)"/><rect x="70" y="200" width="210" height="38" rx="6" fill="var(--card)" stroke="var(--acc)" stroke-width="1.4"/><text x="175" y="224" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--deep2)">Take action; observe reward and Sₜ₊₁</text><path d="M175 238V262" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#fa)"/><rect x="70" y="264" width="210" height="38" rx="6" fill="var(--soft2)" stroke="var(--acc)" stroke-width="1.4"/><text x="175" y="288" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--deep2)">Update Q(Sₜ, Aₜ)</text><path d="M175 302V326" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#fa)"/><rect x="70" y="328" width="210" height="38" rx="6" fill="var(--card)" stroke="var(--acc)" stroke-width="1.4"/><text x="175" y="352" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--deep2)">Check if episode has ended</text><path d="M175 390V432" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#fa)"/><text x="175" y="452" text-anchor="middle" font-size="12" font-weight="bold" fill="var(--ink)">Yes — new episode</text><path d="M70 347H30V147H68" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#fb)"/><text transform="translate(20 250) rotate(-90)" text-anchor="middle" font-size="11" fill="var(--acc)">No — continue</text></svg><figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 4: Simplified Q-learning algorithm flowchart. A new episode starts after termination.</figcaption></figure>
+<h3>Q-learning algorithm: step by step</h3>
+<ol class="s"><li><b>Initialize Q-values:</b> create a Q-table and initialize the values, commonly to zero: \(Q(s,a)=0\).</li><li><b>Observe the initial state:</b> start the agent in an initial state \(S_t\).</li><li><b>Select an action:</b> choose an action using an exploration strategy such as \(\varepsilon\)-greedy.</li><li><b>Perform the action:</b> take action \(A_t\), receive reward \(R_{t+1}\), and observe the next state \(S_{t+1}\).</li><li><b>Update the Q-value:</b> apply the Q-learning update equation.</li><li><b>Move to the next state:</b> set the current state to the observed next state.</li><li><b>Repeat:</b> continue until the episode ends, then repeat across episodes to improve the Q-value estimates.</li></ol>
+<p>Continue training across episodes until the Q-values become sufficiently accurate or a stopping criterion is reached.</p>
+<h4>Policy extraction</h4>
+<p>After learning, select an action with the highest Q-value for each state.</p>
+<div class="def">$$\boxed{\pi(s)\in\arg\max_a Q(s,a)}$$</div>
+<h4>Using the learned policy</h4>
+<p>The agent uses the learned policy to select actions that aim to maximize expected cumulative future rewards.</p>
+<h3>Exploration and exploitation</h3>
+<p>Q-learning must balance two important activities.</p>
+<ul><li><b>Exploration:</b> the agent tries different actions to discover better rewards. <i>Example:</i> a robot tries a new route even though it has previously used another route.</li><li><b>Exploitation:</b> the agent selects the action with the highest currently estimated Q-value. <i>Example:</i> the robot selects the route that has produced the best results so far.</li></ul>
+<h4>Epsilon-greedy (\(\varepsilon\)-greedy) strategy</h4>
+<p>The \(\varepsilon\)-greedy strategy balances exploration and exploitation.</p>
+<ul><li>With probability \(\varepsilon\), the agent chooses an action randomly.</li><li>With probability \(1-\varepsilon\), the agent chooses an action with the highest Q-value.</li></ul>
+<div class="example"><p class="example-label">Interactive example</p>
+<div class="lr"><label for="egs">Exploration ε</label><input type="range" id="egs" min="0" max="100" step="5" value="20"><output id="egout">20%</output></div>
+<div style="display:flex;height:16px;border-radius:8px;overflow:hidden;margin:10px 0 6px;border:1px solid var(--rule)"><div id="egx" style="background:var(--die);width:20%"></div><div id="egb" style="background:var(--acc);width:80%"></div></div>
+<div style="display:flex;justify-content:space-between;font:13px 'JetBrains Mono',monospace;color:var(--deep2)"><span id="egxl">Explore 20%</span><span id="egbl">Exploit 80%</span></div>
+<p id="egt" style="margin-top:12px" aria-live="polite">Adjust ε to see how the agent divides action selection between exploration and exploitation. For example, when ε = 0.2, the agent uses random exploration 20% of the time and greedy action selection 80% of the time.</p></div>
+<script>(function(){var i=document.getElementById("egs");function u(){var e=+i.value;document.getElementById("egout").textContent=e+"%";document.getElementById("egx").style.width=e+"%";document.getElementById("egb").style.width=(100-e)+"%";document.getElementById("egxl").textContent="Explore "+e+"%";document.getElementById("egbl").textContent="Exploit "+(100-e)+"%";document.getElementById("egt").textContent="When ε = "+(e/100)+", the agent uses random exploration "+e+"% of the time and greedy action selection "+(100-e)+"% of the time."}i.addEventListener("input",u)})();</script>
+<p>Exploration is important because the action with the highest current Q-value may not actually be the optimal action.</p>
+<h3>Numerical example of Q-learning</h3>
+<p>Consider a robot navigating a small environment containing three states.</p>
+<figure style="margin:24px 0"><svg viewBox="0 0 340 130" role="img" aria-label="Three-state environment: A (start) to B (intermediate) with reward 0, then B to G (goal) with reward 10" style="width:100%;max-width:30rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<g stroke="var(--ink)" stroke-width="1.6" fill="none"><path d="M71 45H142M133 40L143 45L133 50"/><path d="M196 45H267M258 40L268 45L258 50"/></g>
+<g stroke-width="1.8"><circle cx="45" cy="45" r="26" fill="var(--soft)" stroke="var(--acc)"/><circle cx="170" cy="45" r="26" fill="var(--soft)" stroke="var(--acc)"/><circle cx="295" cy="45" r="26" fill="var(--card)" stroke="var(--die)"/></g>
+<g fill="var(--deep2)" font-size="16" font-weight="bold" text-anchor="middle"><text x="45" y="51">A</text><text x="170" y="51">B</text><text x="295" y="51">G</text></g>
+<g fill="var(--ink)" font-size="12" text-anchor="middle"><text x="107" y="32">R = 0</text><text x="232" y="32">R = 10</text><text x="45" y="95">Start</text><text x="170" y="95">Intermediate</text><text x="295" y="95">Goal</text></g></svg>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 5: Simple three-state environment</figcaption></figure>
+<p>Assume:</p>
+<ul><li>Reward for moving from A to B = 0</li><li>Reward for moving from B to G = 10</li><li>G is the terminal goal state</li><li>Learning rate \(\alpha=0.5\)</li><li>Discount factor \(\gamma=0.9\)</li><li>Initial Q-values are zero</li></ul>
+<div class="example"><p class="example-label">Step 1: move from B to G</p>
+<p>Initially, \(Q(B,\text{Right})=0\). Since G is terminal, its future value is zero.</p>
+$$Q_{\text{new}}(B,\text{Right})=0+0.5[10+0.9(0)-0]$$
+$$\boxed{Q_{\text{new}}(B,\text{Right})=5}$$</div>
+<div class="example"><p class="example-label">Step 2: move from A to B</p>
+<p>In a later episode, assume the agent moves from A to B after learning the Q-value for B. Given \(Q(A,\text{Right})=0\), \(R=0\) and \(\max_aQ(B,a)=5\):</p>
+$$Q_{\text{new}}(A,\text{Right})=0+0.5[0+0.9(5)-0]$$
+$$\boxed{Q_{\text{new}}(A,\text{Right})=2.25}$$</div>
+<div class="scroll"><table><thead><tr><th>State<th>Action<th>Initial Q<th>Updated Q</tr></thead><tbody><tr><td>A<td>Right<td>0<td>2.25</tr><tr><td>B<td>Right<td>0<td>5.00</tr></tbody></table></div>
+<p>Initially, the robot does not know the value of either action. When it reaches the goal from B, the Q-value of moving from B to G increases. In a later episode, this learned value is used to improve the Q-value of moving from A to B. Thus, Q-learning gradually propagates reward information backward through visited state-action pairs using bootstrapping.</p>
+<h3>Advantages of Q-learning</h3>
+<ol class="s"><li><b>Model-free learning:</b> does not require knowledge of the environment’s transition and reward functions.</li><li><b>Off-policy learning:</b> can learn about the greedy target policy while exploring through another policy.</li><li><b>Simple implementation:</b> tabular Q-learning is straightforward for environments with a small number of states and actions.</li><li><b>Online learning:</b> updates Q-values after every observed transition.</li><li><b>Convergence:</b> in finite tabular problems, Q-learning converges to optimal Q-values under suitable conditions, including sufficient exploration and appropriate learning rates.</li></ol>
+<h3>Limitations of Q-learning</h3>
+<ol class="s"><li><b>Large Q-tables:</b> storing Q-values for every state-action pair becomes difficult in large environments.</li><li><b>Sample inefficiency:</b> may require many interactions to learn accurate values.</li><li><b>Exploration challenges:</b> poor exploration can prevent the agent from discovering good actions.</li><li><b>Continuous state spaces:</b> ordinary tabular Q-learning cannot directly represent all possible continuous states.</li><li><b>Learning stability:</b> learning rates, reward structure and exploration strategies influence learning behavior.</li></ol>
+<p class="note">For large or continuous state spaces, function approximation may be used instead of a Q-table.</p>
+<h3>Applications of Q-learning</h3>
+<div class="scroll"><table><thead><tr><th>Application<th>Example</tr></thead><tbody>
+<tr><td>Robotics<td>Learning navigation and movement strategies</tr><tr><td>Game playing<td>Learning action-selection strategies in games</tr><tr><td>Gridworld<td>Finding rewarding paths through a grid</tr><tr><td>Resource allocation<td>Learning decisions for resource distribution</tr><tr><td>Recommendation systems<td>Research applications involving sequential recommendations</tr><tr><td>Autonomous systems<td>Learning control strategies in simulation</tr></tbody></table></div>
+<h3>Difference between Q-learning and SARSA</h3>
+<div class="scroll"><table><thead><tr><th>Feature<th>Q-learning<th>SARSA</tr></thead><tbody>
+<tr><td>Learning type<td>Off-policy<td>On-policy</tr>
+<tr><td>Target<td>Maximum next-state Q-value<td>Q-value of next selected action</tr>
+<tr><td>Behavior<td>Can differ from greedy target policy<td>Learns about the policy used to select actions</tr>
+<tr><td>Learning update<td>Uses \(\max_{a'}Q(s',a')\)<td>Uses \(Q(s',a')\) for the selected action</tr>
+<tr><td>Exploration<td>Often \(\varepsilon\)-greedy<td>Often \(\varepsilon\)-greedy</tr></tbody></table></div>
+<h3>Technical corrections</h3>
+<ol class="s"><li>Q-learning does not necessarily select the action with the highest Q-value during learning; it may select exploratory actions.</li><li>Q-learning learns the optimal action-value function, from which an optimal policy can be derived. An action-value function is not itself a policy.</li><li>Off-policy learning does not mean learning without a policy. It means that the behavior policy used to collect experience can differ from the target policy being learned.</li></ol>
+<h3>Conclusion</h3>
+<p>Q-learning is an important model-free, off-policy Temporal-Difference control algorithm that estimates the action-value function using observed rewards and bootstrapped future values.</p>
+<p>It learns through repeated interactions with the environment and gradually improves its estimates of which actions produce higher expected cumulative rewards.</p>
+<p>For beginners, the essential concepts are Q-values, the Q-table, the Q-learning update equation, \(\varepsilon\)-greedy exploration and the distinction between on-policy and off-policy learning.</p>
+</section>
 
 <section id="s7"><span class="num">7</span><h2>Expected SARSA</h2>
-<p>Instead of one sampled next action, Expected SARSA uses a probability-weighted average over all next actions under a target policy.</p>
+<p>Expected SARSA is a model-free Temporal-Difference (TD) control algorithm that extends SARSA. Instead of one sampled next action, it uses the expected Q-value of all possible actions in the next state, a probability-weighted average under a target policy, rather than the Q-value of a single selected next action.</p>
+<ul><li>SARSA uses the Q-value of the next action selected by the current policy.</li><li>Q-learning uses the maximum estimated Q-value of the next state.</li><li>Expected SARSA uses the probability-weighted average of the Q-values of all possible next actions.</li></ul>
+<p>Expected SARSA can be used for both on-policy and off-policy learning, depending on the target policy used in its update.</p>
+<h3>Key characteristics</h3>
+<ul><li><b>Model-free:</b> does not require a model of the environment’s transition or reward functions.</li><li><b>TD learning:</b> updates Q-values using immediate rewards and estimated future action values.</li><li><b>Expected value:</b> uses a probability-weighted average of the Q-values of possible next actions.</li><li><b>Flexible policy learning:</b> can perform on-policy or off-policy learning.</li><li><b>Reduced variance:</b> removes the randomness associated with sampling a single next action from the TD target.</li><li><b>Bootstrapping:</b> uses existing Q-value estimates to update the current Q-value.</li></ul>
+<h3>Working principle</h3>
+<p>Consider an agent moving through a grid to reach a goal.</p>
+<ol class="s"><li>The agent observes its current state \(s\).</li><li>It selects an action \(a\) using a policy such as \(\varepsilon\)-greedy.</li><li>The agent takes the action and receives a reward \(R\).</li><li>It moves to the next state \(s'\).</li><li>The agent calculates the expected Q-value of all possible actions in \(s'\), weighted by their selection probabilities under the target policy.</li><li>It updates the current Q-value using the immediate reward and this expected value.</li></ol>
+<figure style="margin:20px 0"><svg viewBox="0 0 340 215" role="img" aria-label="Expected SARSA: next state s prime branches to action 1, action 2 and action 3, each weighted by its selection probability times its Q-value" style="width:100%;max-width:28rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<defs><marker id="ea" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>
+<rect x="8" y="75" width="86" height="50" rx="7" fill="var(--soft)" stroke="var(--acc)" stroke-width="1.5"/><text x="51" y="96" text-anchor="middle" font-size="11" fill="var(--mut)">Next state</text><text x="51" y="115" text-anchor="middle" font-size="15" font-weight="bold" fill="var(--deep2)">s′</text>
+<g stroke="var(--ink)" stroke-width="1.6" fill="none"><path d="M94 100H140M140 30V170"/><path d="M140 30H188" marker-end="url(#ea)"/><path d="M140 100H188" marker-end="url(#ea)"/><path d="M140 170H188" marker-end="url(#ea)"/></g>
+<g stroke="var(--die)" stroke-width="1.4" fill="var(--card)"><rect x="192" y="10" width="140" height="40" rx="6"/><rect x="192" y="80" width="140" height="40" rx="6"/><rect x="192" y="150" width="140" height="40" rx="6"/></g>
+<g text-anchor="middle" font-size="12" font-weight="bold" fill="var(--deep2)"><text x="262" y="28">Action 1</text><text x="262" y="98">Action 2</text><text x="262" y="168">Action 3</text></g>
+<g text-anchor="middle" font-size="11" fill="var(--ink)"><text x="262" y="43">π₁ × Q₁</text><text x="262" y="113">π₂ × Q₂</text><text x="262" y="183">π₃ × Q₃</text></g>
+<text x="170" y="208" text-anchor="middle" font-size="12" fill="var(--ink)">Expected Q-value = π₁Q₁ + π₂Q₂ + π₃Q₃</text></svg><figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Expected SARSA considers all possible next actions and their selection probabilities.</figcaption></figure>
+<h3>Expected SARSA update equation</h3>
 <div class="def"><span class="lab">Expected SARSA update.</span>
-$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\Big[R_{t+1}+\gamma\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)-Q(S_t,A_t)\Big]$$
-where \(\pi(a\mid S_{t+1})\) is the probability of selecting action \(a\) in the next state under the target policy.
+$$\boxed{Q(s,a)\leftarrow Q(s,a)+\alpha\left[R+\gamma\sum_{a'}\pi(a'\mid s')Q(s',a')-Q(s,a)\right]}$$
 Expected SARSA can be on-policy or off-policy depending on which policy \(\pi\) is used in the expectation.</div>
-<h3>Comparison of SARSA, Q-Learning and Expected SARSA</h3>
-<div class="scroll"><table><thead><tr><th>Algorithm<th>Next-State Value Used<th>Policy Type</tr></thead><tbody>
-<tr><td>SARSA<td>\(Q(S_{t+1},A_{t+1})\)<td>On-policy</tr>
-<tr><td>Q-learning<td>\(\max_aQ(S_{t+1},a)\)<td>Off-policy</tr>
-<tr><td>Expected SARSA<td>\(\sum_a\pi(a\mid S_{t+1})Q(S_{t+1},a)\)<td>On-policy or off-policy</tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>Symbol<th>Meaning</tr></thead><tbody>
+<tr><td>\(Q(s,a)\)<td>Current Q-value for state \(s\) and action \(a\)</tr><tr><td>\(\alpha\)<td>Learning rate</tr><tr><td>\(R\)<td>Immediate reward</tr><tr><td>\(\gamma\)<td>Discount factor</tr><tr><td>\(s'\)<td>Next state</tr><tr><td>\(\pi(a'\mid s')\)<td>Probability of selecting action \(a'\) in state \(s'\) under the target policy</tr><tr><td>\(Q(s',a')\)<td>Q-value of action \(a'\) in the next state</tr><tr><td>\(\sum_{a'}\)<td>Sum over all possible actions in the next state</tr></tbody></table></div>
+<h4>Expected Q-value</h4>
+<div class="def">$$\boxed{E_\pi[Q(s',A')]=\sum_{a'}\pi(a'\mid s')Q(s',a')}$$
+This represents the weighted average of the Q-values of all possible actions in the next state.</div>
+<p>The TD error for Expected SARSA is</p>
+$$\delta=R+\gamma E_\pi[Q(s',A')]-Q(s,a)$$
+<p>Therefore,</p>
+<div class="def">$$\boxed{Q(s,a)\leftarrow Q(s,a)+\alpha\,\delta}$$
+For a terminal next state, the expected future Q-value is zero.</div>
+<h3>Expected SARSA algorithm</h3>
+<ol class="s"><li><b>Initialize Q-values:</b> initialize the action-value function \(Q(s,a)\), commonly to zero.</li><li><b>Start an episode:</b> observe the initial state \(s\).</li><li><b>Select an action:</b> choose action \(a\) using a behavior policy such as \(\varepsilon\)-greedy.</li><li><b>Execute the action:</b> take action \(a\), receive reward \(R\), and observe the next state \(s'\).</li><li><b>Calculate the expected Q-value:</b> if \(s'\) is nonterminal, calculate \(E_\pi[Q(s',A')]=\sum_{a'}\pi(a'\mid s')Q(s',a')\).</li><li><b>Update the Q-value:</b> apply the Expected SARSA update equation. Use an expected next-state value of zero for a terminal state.</li><li><b>Move to the next state:</b> set \(s\leftarrow s'\).</li><li><b>Repeat:</b> continue until the episode ends, then repeat over many episodes to improve the Q-values.</li></ol>
+<h3>Numerical example of Expected SARSA</h3>
+<p>Consider an agent in a gridworld. The next state has three possible actions with the following Q-values and selection probabilities.</p>
+<div class="scroll"><table><thead><tr><th>Next action<th>Q-value<th>Selection probability</tr></thead><tbody><tr><td>Up<td>10<td>0.6</tr><tr><td>Down<td>5<td>0.3</tr><tr><td>Right<td>2<td>0.1</tr></tbody></table></div>
+<p>Let \(Q(s,a)=6\), \(R=4\), \(\alpha=0.1\), \(\gamma=0.9\).</p>
+<div class="example"><p class="example-label">Step 1: expected Q-value</p>
+$$E_\pi[Q(s',A')]=0.6(10)+0.3(5)+0.1(2)=6+1.5+0.2$$
+$$\boxed{E_\pi[Q(s',A')]=7.7}$$</div>
+<div class="example"><p class="example-label">Step 2: TD error</p>
+$$\delta=4+0.9(7.7)-6=4+6.93-6$$
+$$\boxed{\delta=4.93}$$</div>
+<div class="example"><p class="example-label">Step 3: update Q-value</p>
+$$Q_{\text{new}}(s,a)=6+0.1(4.93)$$
+$$\boxed{Q_{\text{new}}(s,a)=6.493}$$
+<p>Therefore, the estimated Q-value increases from 6 to 6.493.</p></div>
+<div class="example"><p class="example-label">Interactive example</p>
+<p>Change the probability of selecting the Up action to see how the expected Q-value and updated Q-value change. The remaining probability is shared between Down and Right in a 3:1 ratio.</p>
+<div class="lr"><label for="eu">Probability of Up</label><input type="range" id="eu" min="0" max="100" step="1" value="60"><output id="euo">60%</output></div>
+<div class="scroll" style="margin:10px 0"><table><tbody><tr><td>Up (Q = 10)<td id="e1">60.0%</tr><tr><td>Down (Q = 5)<td id="e2">30.0%</tr><tr><td>Right (Q = 2)<td id="e3">10.0%</tr><tr><td><b>Expected Q-value</b><td id="eE">7.700</tr><tr><td><b>Updated Q-value</b><td id="eQ">6.493</tr></tbody></table></div>
+<p class="note" style="margin-bottom:0">This is an illustrative target-policy distribution, not necessarily an ε-greedy distribution.</p></div>
+<script>(function(){var i=document.getElementById("eu");function u(){var p=+i.value/100,d=(1-p)*.75,r=(1-p)*.25,E=p*10+d*5+r*2,Q=6+.1*(4+.9*E-6);document.getElementById("euo").textContent=i.value+"%";document.getElementById("e1").textContent=(p*100).toFixed(1)+"%";document.getElementById("e2").textContent=(d*100).toFixed(1)+"%";document.getElementById("e3").textContent=(r*100).toFixed(1)+"%";document.getElementById("eE").textContent=E.toFixed(3);document.getElementById("eQ").textContent=Q.toFixed(3)}i.addEventListener("input",u)})();</script>
+<h3>Expected SARSA with an ε-greedy policy</h3>
+<p>Expected SARSA commonly uses an \(\varepsilon\)-greedy policy. Under \(\varepsilon\)-greedy action selection:</p>
+<ul><li>With probability \(\varepsilon\), an action is selected randomly.</li><li>With probability \(1-\varepsilon\), a greedy action is selected.</li></ul>
+<p>When there is one greedy action among \(n\) available actions, its total selection probability is</p>
+<div class="def">$$\boxed{P(\text{greedy action})=1-\varepsilon+\frac{\varepsilon}{n}}$$</div>
+<p>For each non-greedy action,</p>
+<div class="def">$$\boxed{P(\text{non-greedy action})=\frac{\varepsilon}{n}}$$
+Here, \(n\) is the number of available actions.</div>
+<p class="note">If several actions tie for the highest Q-value, their greedy-selection probabilities must be handled according to the tie-breaking rule.</p>
+<h3>On-policy and off-policy Expected SARSA</h3>
+<p>Expected SARSA supports both types of learning.</p>
+<h4>On-policy Expected SARSA</h4>
+<p>The target policy used to calculate the expected Q-value is the same policy used to select actions. For example, an agent selects actions using \(\varepsilon\)-greedy and calculates the expected Q-value using that same \(\varepsilon\)-greedy policy.</p>
+<h4>Off-policy Expected SARSA</h4>
+<p>The behavior policy and target policy are different. For example, an agent explores using \(\varepsilon\)-greedy but calculates the expected Q-value using a greedy target policy. If the target policy is greedy, the expectation becomes</p>
+$$\sum_{a'}\pi(a'\mid s')Q(s',a')=\max_{a'}Q(s',a')$$
+<p>In this case, the Expected SARSA update becomes the Q-learning update.</p>
+<h3>Advantages of Expected SARSA</h3>
+<ol class="s"><li><b>Reduced variance:</b> uses the expected next-action value instead of a randomly sampled next-action value.</li><li><b>More consistent updates:</b> reduces the effect of randomness in next-action selection.</li><li><b>Flexible learning:</b> can operate as an on-policy or off-policy method.</li><li><b>Model-free:</b> learns without requiring a model of environment dynamics.</li><li><b>Potentially efficient learning:</b> reduced variance may improve learning efficiency in suitable environments.</li></ol>
+<h3>Disadvantages of Expected SARSA</h3>
+<ol class="s"><li><b>Higher computation:</b> requires calculating a weighted average over possible next actions.</li><li><b>Action probabilities required:</b> needs the target policy’s action-selection probabilities.</li><li><b>Large action spaces:</b> calculating the expectation may become expensive when many actions are available.</li><li><b>No universal performance guarantee:</b> Expected SARSA is not always faster or more stable than SARSA in every learning environment.</li></ol>
+<h3>Comparison of SARSA, Q-learning and Expected SARSA</h3>
+<div class="scroll"><table><thead><tr><th>Feature<th>SARSA<th>Q-learning<th>Expected SARSA</tr></thead><tbody>
+<tr><td>Learning type<td>On-policy<td>Off-policy<td>On-policy or off-policy</tr>
+<tr><td>Next-state value<td>Selected action’s Q-value<td>Maximum Q-value<td>Expected Q-value</tr>
+<tr><td>Update<td>\(Q(S_{t+1},A_{t+1})\)<td>\(\max_{a'}Q(S_{t+1},a')\)<td>\(\sum_{a'}\pi(a'\mid S_{t+1})Q(S_{t+1},a')\)</tr>
+<tr><td>Next-action sampling variance in target<td>Present<td>Absent<td>Absent</tr>
+<tr><td>Computation<td>Low<td>Low<td>Higher for multiple actions</tr>
+<tr><td>Main feature<td>Learns about the current policy<td>Learns toward the greedy policy<td>Averages over possible next actions</tr></tbody></table></div>
 <p><b>Easy way to remember:</b></p>
-<ul><li>SARSA uses the next selected action.</li><li>Q-learning uses the best estimated next action.</li><li>Expected SARSA uses the weighted average of next actions.</li></ul></section>
+<ul><li>SARSA uses the next selected action.</li><li>Q-learning uses the best estimated next action.</li><li>Expected SARSA uses the weighted average of next actions.</li></ul>
+<h3>Conclusion</h3>
+<p>Expected SARSA is a model-free TD control algorithm that updates action values using the probability-weighted average of Q-values for all possible next actions.</p>
+<p>It reduces the randomness associated with selecting a single next action in ordinary SARSA. It can be used for both on-policy and off-policy learning, depending on the target policy.</p>
+<p class="note"><b>Key point for examinations:</b> SARSA uses the selected next action, Q-learning uses the maximum next-action Q-value, and Expected SARSA uses the expected Q-value of all possible next actions.</p></section>
 
 <section id="s8"><span class="num">8</span><h2>n-Step Bootstrapping</h2>
-<p>One-step TD uses one reward and then bootstraps. Two-step TD uses two rewards, and n-step TD uses \(n\) rewards before bootstrapping from the estimated value after \(n\) steps.</p>
-<h3>Illustration</h3>
-<figure style="margin:24px 0"><svg viewBox="0 0 340 132" role="img" aria-label="States S_t, S_t+1, S_t+2 connected by rewards R_t+1 and R_t+2, with a one-step bootstrap from S_t+1 and a two-step bootstrap from S_t+2" style="width:100%;max-width:32rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
-<g stroke="var(--mut)" stroke-width="1.4" fill="none" opacity=".9"><path d="M59 35H126M112 31L126 35L112 39"/><path d="M199 35H266M252 31L266 35L252 39"/></g>
-<circle cx="29" cy="35" r="24" fill="var(--card)" stroke="var(--acc)"/><text x="29" y="39" fill="var(--deep2)" text-anchor="middle" font-size="13" font-weight="bold">Sₜ</text>
-<circle cx="160" cy="35" r="24" fill="var(--card)" stroke="var(--acc)"/><text x="160" y="39" fill="var(--deep2)" text-anchor="middle" font-size="13" font-weight="bold">Sₜ₊₁</text>
-<circle cx="300" cy="35" r="24" fill="var(--card)" stroke="var(--acc)"/><text x="300" y="39" fill="var(--deep2)" text-anchor="middle" font-size="13" font-weight="bold">Sₜ₊₂</text>
-<text x="93" y="21" text-anchor="middle" font-size="11" fill="var(--ink)">Rₜ₊₁</text><text x="234" y="21" text-anchor="middle" font-size="11" fill="var(--ink)">Rₜ₊₂</text>
-<path d="M160 63V81" stroke="var(--die)" stroke-width="1.8"/><path d="M300 63V81" stroke="var(--die)" stroke-width="1.8"/>
-<text x="160" y="97" text-anchor="middle" font-size="10" fill="var(--dietxt)">1-step bootstrap</text><text x="289" y="111" text-anchor="middle" font-size="10" fill="var(--dietxt)">2-step bootstrap</text></svg>
-<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 2: Bootstrapping after one or two steps</figcaption></figure>
-<div class="def"><span class="lab">n-step return.</span>
-$$G_{t:t+n}=\sum_{k=1}^{n}\gamma^{k-1}R_{t+k}+\gamma^nV(S_{t+n})$$
-If the episode ends within \(n\) steps, the return contains only the rewards up to termination, with no bootstrapped term.</div>
+<h3>Bootstrapping in reinforcement learning</h3>
+<div class="def"><span class="lab">Bootstrapping.</span> A technique in which an agent updates the estimated value of a state or state-action pair using existing estimates of future values, instead of waiting for the complete return of an episode. In simple words, bootstrapping means improving one estimate using another estimate.</div>
+<h4>Key features</h4>
+<ol class="s"><li>Uses estimated future values to update current values.</li><li>Allows learning without waiting until an episode ends.</li><li>Supports incremental or online learning.</li><li>Is commonly used in Temporal-Difference (TD) methods.</li><li>Forms the basis of algorithms such as TD(0), SARSA and Q-learning.</li></ol>
+<div class="example"><p class="example-label">Example</p><p>Consider a robot moving from state A to state B. The robot receives an immediate reward of 5, and the estimated value of state B is 10. Instead of waiting until the robot reaches its final destination, bootstrapping uses the reward and the estimated value of B to update the value of A.</p></div>
+<figure style="margin:20px 0"><svg viewBox="0 0 340 135" role="img" aria-label="Bootstrapping: State A with a current value, reward 5 to State B with V(B)=10; the reward and V(B) are used to update V(A)" style="width:100%;max-width:30rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<defs><marker id="ba" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>
+<rect x="8" y="15" width="100" height="56" rx="7" fill="var(--soft)" stroke="var(--acc)" stroke-width="1.5"/><text x="58" y="38" text-anchor="middle" font-size="13" font-weight="bold" fill="var(--deep2)">State A</text><text x="58" y="58" text-anchor="middle" font-size="12" fill="var(--ink)">Current value</text>
+<rect x="232" y="15" width="100" height="56" rx="7" fill="var(--card)" stroke="var(--die)" stroke-width="1.5"/><text x="282" y="38" text-anchor="middle" font-size="13" font-weight="bold" fill="var(--deep2)">State B</text><text x="282" y="58" text-anchor="middle" font-size="12" fill="var(--ink)">V(B) = 10</text>
+<path d="M108 43H230" stroke="var(--ink)" stroke-width="1.6" marker-end="url(#ba)"/><text x="170" y="34" text-anchor="middle" font-size="12" fill="var(--ink)">Reward = 5</text>
+<path d="M58 78V98H282V78" fill="none" stroke="var(--acc)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="170" y="118" text-anchor="middle" font-size="12" fill="var(--acc)">Use reward and V(B) to update V(A)</text></svg><figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Basic concept of bootstrapping</figcaption></figure>
+<h4>One-step bootstrapping</h4>
+<p>One-step bootstrapping updates the value of a state using the immediate reward and the estimated value of the next state (the TD(0) update from section 4). For a terminal next state, \(V(S_{t+1})=0\).</p>
+<h4>Types of bootstrapping</h4>
+<p><b>One-step:</b> one observed reward followed by an estimated value of the next state. Example: TD(0) prediction.</p>
+$$G_{t:t+1}=R_{t+1}+\gamma V(S_{t+1})$$
+<p><b>Multi-step:</b> rewards collected over several steps before bootstrapping from an estimated future value. For example, the two-step return is</p>
+$$G_{t:t+2}=R_{t+1}+\gamma R_{t+2}+\gamma^2V(S_{t+2})$$
+<p>Multi-step bootstrapping provides a connection between one-step TD learning and Monte Carlo methods.</p>
+<h4>Monte Carlo vs TD bootstrapping</h4>
+<div class="scroll"><table><thead><tr><th>Feature<th>Monte Carlo methods<th>TD bootstrapping methods</tr></thead><tbody>
+<tr><td>Value update<td>Uses complete observed returns<td>Uses observed rewards and estimated future values</tr>
+<tr><td>Episode completion<td>Ordinary MC prediction requires complete episodes<td>One-step TD does not require episode completion</tr>
+<tr><td>Bootstrapping<td>No<td>Yes</tr>
+<tr><td>Learning<td>Based on complete trajectories<td>Can update during a trajectory</tr>
+<tr><td>Variance<td>Often higher<td>Often lower for shorter backups</tr>
+<tr><td>Bias<td>Does not introduce bootstrap-target bias<td>May introduce bias through estimated future values</tr>
+<tr><td>Continuing tasks<td>Less convenient<td>Well suited</tr></tbody></table></div>
+<p class="note"><b>Key difference:</b> Monte Carlo learning waits for the complete outcome, while TD bootstrapping uses current estimates of future outcomes to learn earlier.</p>
+<h4>Advantages of bootstrapping</h4>
+<ol class="s"><li><b>Online learning:</b> value estimates can be updated without waiting for an episode to end.</li><li><b>Memory efficiency:</b> one-step TD methods do not need to store complete trajectories.</li><li><b>Continuing tasks:</b> suitable for tasks that continue indefinitely.</li><li><b>Use of partial experience:</b> learning can occur from short sequences of experience.</li><li><b>Flexible application:</b> used in prediction and control algorithms.</li></ol>
+<h4>Limitations of bootstrapping</h4>
+<ol class="s"><li><b>Estimation bias:</b> incorrect future-value estimates can affect current updates.</li><li><b>Error propagation:</b> errors may be passed backward through successive updates.</li><li><b>Learning-rate sensitivity:</b> poor learning-rate choices can lead to slow or unstable learning.</li><li><b>Convergence conditions:</b> bootstrapping does not guarantee convergence in every setting, especially with function approximation.</li></ol>
+<h3>n-Step bootstrapping</h3>
+<div class="def"><span class="lab">Definition.</span> n-Step bootstrapping is a reinforcement learning technique in which an agent uses rewards obtained over the next \(n\) steps, followed by an estimated future value, to update its current value estimate. It is an extension of one-step TD learning.</div>
+<ul><li><b>1-step TD:</b> one observed reward and the estimated value after one step.</li><li><b>2-step TD:</b> two observed rewards and the estimated value after two steps.</li><li><b>3-step TD:</b> three observed rewards and the estimated value after three steps.</li><li><b>n-step TD:</b> \(n\) observed rewards and the estimated value after \(n\) steps.</li></ul>
+<h4>Illustration of n-step bootstrapping</h4>
+<figure style="margin:20px 0"><svg viewBox="0 0 400 170" role="img" aria-label="States S_t to S_t+3 connected by rewards R_t+1 to R_t+3, with one-step, two-step and three-step backup brackets" style="width:100%;max-width:34rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<defs><marker id="na" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>
+<g stroke="var(--ink)" stroke-width="1.5" fill="none"><path d="M52 32H93" marker-end="url(#na)"/><path d="M137 32H178" marker-end="url(#na)"/><path d="M222 32H263" marker-end="url(#na)"/></g>
+<g fill="var(--soft)" stroke="var(--acc)" stroke-width="1.5"><circle cx="30" cy="32" r="22"/><circle cx="115" cy="32" r="22"/><circle cx="200" cy="32" r="22"/><circle cx="285" cy="32" r="22"/></g>
+<g fill="var(--deep2)" font-size="13" font-weight="bold" text-anchor="middle"><text x="30" y="37">Sₜ</text><text x="115" y="37">Sₜ₊₁</text><text x="200" y="37">Sₜ₊₂</text><text x="285" y="37">Sₜ₊₃</text></g>
+<g fill="var(--ink)" font-size="11" text-anchor="middle"><text x="72" y="18">Rₜ₊₁</text><text x="157" y="18">Rₜ₊₂</text><text x="242" y="18">Rₜ₊₃</text></g>
+<g fill="none" stroke-width="2.2"><path d="M36 56V78H115V56" stroke="#b9772f"/><path d="M30 56V98H200V56" stroke="#2f7fb0"/><path d="M24 56V118H285V56" stroke="#2f9a6a"/></g>
+<g font-size="12" text-anchor="start"><text x="320" y="82" fill="#b9772f">1-step</text><text x="320" y="102" fill="#2f7fb0">2-step</text><text x="320" y="122" fill="#2f9a6a">3-step</text></g>
+<text x="170" y="150" text-anchor="middle" font-size="12" fill="var(--ink)">More rewards are observed before bootstrapping</text></svg><figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 2: Comparison of one-step, two-step and three-step backups</figcaption></figure>
+<h4>General n-step return</h4>
+<div class="def"><span class="lab">n-step return.</span> For a nonterminal trajectory over the next \(n\) steps:
+$$\boxed{G_{t:t+n}=R_{t+1}+\gamma R_{t+2}+\cdots+\gamma^{n-1}R_{t+n}+\gamma^nV(S_{t+n})}$$
+or, equivalently, $$G_{t:t+n}=\sum_{k=1}^{n}\gamma^{k-1}R_{t+k}+\gamma^nV(S_{t+n})$$
+Where:
+<ul><li>\(G_{t:t+n}\): n-step return.</li><li>\(R_{t+1},\ldots,R_{t+n}\): rewards received during the next \(n\) steps.</li><li>\(\gamma\): discount factor.</li><li>\(V(S_{t+n})\): bootstrapped value after \(n\) steps.</li></ul>
+If the episode terminates before \(n\) steps, only the remaining observed rewards are included; the terminal bootstrap value is zero.</div>
 <h3 id="nstd">n-Step TD prediction</h3>
-<div class="def"><span class="lab">Definition.</span> n-Step TD prediction estimates the state-value function using multiple future rewards and a bootstrapped estimate. The update is $$V(S_t)\leftarrow V(S_t)+\alpha\big[G_{t:t+n}-V(S_t)\big]$$</div>
+<div class="def"><span class="lab">Definition.</span> n-Step TD prediction is an extension of TD(0) that estimates the state-value function using rewards collected over multiple steps and an estimated future-state value. Instead of updating from only the next reward, it uses an n-step return. The update is $$\boxed{V(S_t)\leftarrow V(S_t)+\alpha\big[G_{t:t+n}-V(S_t)\big]}$$ The quantity \(G_{t:t+n}-V(S_t)\) is the n-step prediction error.</div>
+<h4>Working steps</h4>
+<ol class="s"><li>Initialize the state-value function \(V(s)\).</li><li>Select and follow a fixed policy \(\pi\).</li><li>Observe the current state \(S_t\).</li><li>Collect rewards over the next \(n\) steps, or until the episode terminates.</li><li>Calculate the n-step return.</li><li>Update the current-state value using the n-step return.</li><li>Continue learning from the observed experience.</li></ol>
 <div class="example"><p class="example-label">Example: two-step TD</p>
 <p>Let \(R_{t+1}=4\), \(R_{t+2}=6\), \(V(S_{t+2})=10\), \(\gamma=0.9\), \(V(S_t)=12\), \(\alpha=0.1\).</p>
 $$G_{t:t+2}=4+0.9(6)+0.9^2(10)=4+5.4+8.1=17.5$$
-$$V_{\text{new}}(S_t)=12+0.1(17.5-12)=12.55$$</div></section>
+$$V_{\text{new}}(S_t)=12+0.1(17.5-12)=12.55$$</div>
+<div class="example"><p class="example-label">Example: three-step TD prediction</p>
+<p>Suppose a robot receives three rewards \(R_{t+1}=2\), \(R_{t+2}=3\), \(R_{t+3}=4\). The estimated value after three steps is \(V(S_{t+3})=10\). Let \(\gamma=0.9\), \(\alpha=0.1\), \(V(S_t)=8\).</p>
+$$G_{t:t+3}=2+0.9(3)+(0.9)^2(4)+(0.9)^3(10)=2+2.7+3.24+7.29$$
+$$\boxed{G_{t:t+3}=15.23}$$
+$$V_{\text{new}}(S_t)=8+0.1(15.23-8)=8+0.723$$
+$$\boxed{V_{\text{new}}(S_t)=8.723}$$
+<p>Therefore, the estimated value of the initial state increases from 8 to 8.723.</p></div>
+<h4>Advantages of n-step TD prediction</h4>
+<ol class="s"><li>Uses multiple observed rewards before bootstrapping.</li><li>Can propagate delayed reward information more quickly than one-step TD.</li><li>Provides a way to balance bootstrapping bias and return variance.</li><li>Does not require a complete episode when the n-step horizon is reached before termination.</li><li>Connects one-step TD learning with Monte Carlo prediction.</li></ol>
+<h4>Limitations of n-step TD prediction</h4>
+<ol class="s"><li>Must wait for up to \(n\) steps before updating an earlier state.</li><li>Requires storing enough recent transitions or rewards.</li><li>Larger \(n\) may produce higher-variance targets.</li><li>The best choice of \(n\) depends on the environment and learning problem.</li></ol>
+<h4>One-step vs n-step TD prediction</h4>
+<div class="scroll"><table><thead><tr><th>Feature<th>One-step TD (TD(0))<th>n-step TD</tr></thead><tbody>
+<tr><td>Rewards used<td>One reward<td>Up to n rewards</tr>
+<tr><td>Bootstrapping point<td>After one step<td>After n steps</tr>
+<tr><td>Update timing<td>After one transition<td>After n transitions, or earlier termination</tr>
+<tr><td>Storage<td>Very low<td>Stores recent rewards and states</tr>
+<tr><td>Reward propagation<td>May be slower for delayed rewards<td>May propagate delayed rewards faster</tr>
+<tr><td>Variance<td>Often lower<td>May increase as n increases</tr>
+<tr><td>Example<td>TD(0) prediction<td>3-step TD prediction</tr></tbody></table></div></section>
 
 <section id="s9"><span class="num">9</span><h2>n-step SARSA</h2>
 <p>An on-policy control method that uses \(n\) rewards and the action value after \(n\) steps.</p>
