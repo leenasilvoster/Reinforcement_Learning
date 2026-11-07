@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CST497 Module 5: Function Approximation Methods</title>
+<meta name="description" content="Lecture notes template: on-policy prediction with approximation, eligibility traces and policy gradient methods.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,560;1,9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<script>window.MathJax={tex:{inlineMath:[['\\(','\\)']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+<style>
+:root{--bg:#f7f5f0;--card:#fffdf9;--ink:#1c1a16;--mut:#52493d;--rule:#ddd6c8;--acc:#1f4d4a;--deep2:#163936;--die:#b8863a;--dietxt:#94682a;--soft:#f1e3c8;--soft2:#e9d3a3;--dot:rgba(31,77,74,.055);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16140f;--card:#1e1b14;--ink:#ece6d9;--mut:#b5ab95;--rule:#3a342a;--acc:#7fc4bd;--deep2:#a9dad4;--die:#d9a856;--dietxt:#e2b96a;--soft:#2e2718;--soft2:#4a3d22;--dot:rgba(127,196,189,.07)}}
+:root[data-theme="dark"]{--bg:#16140f;--card:#1e1b14;--ink:#ece6d9;--mut:#b5ab95;--rule:#3a342a;--acc:#7fc4bd;--deep2:#a9dad4;--die:#d9a856;--dietxt:#e2b96a;--soft:#2e2718;--soft2:#4a3d22;--dot:rgba(127,196,189,.07)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(1.5rem + env(safe-area-inset-top,0px))}
+@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{margin:0;background-color:var(--bg);background-image:radial-gradient(circle at 1.5px 1.5px,var(--dot) 1px,transparent 0);background-size:26px 26px;color:var(--ink);font:18px/1.68 Newsreader,Georgia,serif}
+a{color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+h1,h2,h3,h4{font-family:Fraunces,Georgia,serif}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:56px;padding:0 32px 90px}
+.hero{grid-column:1/-1;padding:68px 4px 46px;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:1fr auto;align-items:end;gap:24px}
+.hero-die{width:118px;height:118px;flex-shrink:0}
+.modnav{margin:0 0 16px;font:13px "JetBrains Mono",monospace}.modnav a{text-decoration:none}.modnav a:hover{text-decoration:underline;text-decoration-color:var(--die)}
+.kicker{font:13px "JetBrains Mono",monospace;color:var(--mut);margin:0 0 14px}
+.kicker span{color:var(--dietxt)}
+h1{font-weight:560;font-size:clamp(2.2rem,4.2vw,3.3rem);line-height:1.06;margin:0;color:var(--deep2);max-width:16ch}
+.hero-sub{margin:18px 0 0;max-width:52ch;color:var(--mut);font-size:1.05rem}
+.toc{padding-top:42px}
+.toc-inner{position:sticky;top:calc(32px + env(safe-area-inset-top,0px));max-height:calc(100vh - 64px);overflow-y:auto}
+.toc-label{font:12px "JetBrains Mono",monospace;color:var(--mut);margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+.toc ol{list-style:none;margin:0;padding:0;counter-reset:toc}
+.toc li{counter-increment:toc;margin:0 0 3px}
+.toc a{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:3px;color:var(--ink);text-decoration:none;font-size:.94rem;line-height:1.3}
+.toc a:hover,.toc a.on{background:var(--soft);color:var(--deep2)}
+.toc a::before{content:counter(toc);font:.78rem "JetBrains Mono",monospace;color:var(--dietxt);width:1.6em;flex-shrink:0}
+.toc-toggle{display:none}
+main{max-width:700px;padding-top:42px}
+section{padding-bottom:54px;margin-bottom:54px;border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:none}
+.num{font:13px "JetBrains Mono",monospace;color:var(--card);background:var(--die);min-width:26px;height:26px;padding:0 6px;border-radius:13px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px}
+h2{font-weight:560;font-size:1.7rem;color:var(--deep2);margin:0 0 22px;line-height:1.2}
+h3{font-weight:500;font-style:italic;font-size:1.18rem;color:var(--acc);margin:30px 0 10px}
+h4{font-weight:500;font-size:1.02rem;color:var(--acc);margin:20px 0 6px}
+p,ul,ol.s{margin:0 0 16px}
+li{margin:.25rem 0}
+b{color:var(--deep2)}
+.def{background:var(--card);border-left:3px solid var(--acc);padding:14px 20px;margin:18px 0;border-radius:0 6px 6px 0}
+.def>:last-child{margin-bottom:0}
+.lab{font-family:Fraunces,Georgia,serif;font-style:italic;font-weight:500;color:var(--deep2)}
+.note{border-left:3px solid var(--die);padding:2px 0 2px 16px;color:var(--mut)}
+.example{margin:20px 0;padding:18px 22px;background:var(--soft);border-radius:6px}
+.example-label{font:11.5px "JetBrains Mono",monospace;color:var(--dietxt);margin:0 0 10px}
+.example>:last-child{margin-bottom:0}
+mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%;margin:14px 0!important}
+.def mjx-container[display="true"]{border:1.5px solid var(--acc);border-radius:6px;background:var(--bg);padding:14px 18px}
+.scroll{overflow-x:auto;margin:20px 0}
+table{border-collapse:collapse;width:100%;font-size:.96rem}
+th,td{border:1px solid var(--rule);padding:9px 14px;text-align:left}
+th{background:var(--acc);color:var(--card);font-weight:500}
+.ph{color:var(--mut);font-style:italic}
+details{border:1px solid var(--rule);background:var(--card);border-radius:6px;padding:.2rem 1rem;margin:1rem 0}summary{cursor:pointer;font:500 1rem Fraunces,Georgia,serif;padding:.5rem 0;color:var(--deep2)}
+.pager{display:flex;justify-content:flex-start;margin-top:8px}.pager a{display:block;border:1px solid var(--rule);background:var(--card);border-radius:8px;padding:14px 22px;text-decoration:none}.pager a:hover{background:var(--soft)}.pager small{display:block;font:12px "JetBrains Mono",monospace;color:var(--mut)}.pager span{font:500 1.15rem Fraunces,Georgia,serif;color:var(--deep2)}
+footer{grid-column:1/-1;padding:34px 4px 0;border-top:1px solid var(--rule);font:12px "JetBrains Mono",monospace;color:var(--mut);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media(max-width:880px){.wrap{display:block;padding:0 20px 60px}.hero{display:block;padding:40px 0 28px}.hero-die{display:none}.toc{padding-top:0}.toc-inner{position:static;max-height:none;padding:18px 0}.toc-toggle{display:flex;width:100%;justify-content:space-between;background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:12px 16px;font:13px "JetBrains Mono",monospace;color:var(--deep2);cursor:pointer;margin-top:24px}.toc-body{display:none;margin-top:14px}.toc-body.open{display:block}main{padding-top:8px}footer{margin-top:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero"><div><p class="modnav"><a href="https://leenasilvoster.github.io/Reinforcement_Learning/Module_4.html">← Module 4</a></p><p class="kicker">CST497 · Reinforcement Learning · <span>Module 5</span></p><h1>Function Approximation Methods</h1><p class="hero-sub">Scaling RL beyond tables: approximating value functions, spreading credit with eligibility traces, and learning policies directly with policy gradients.</p></div><svg class="hero-die" viewBox="0 0 100 100" fill="none" aria-hidden="true"><rect x="6" y="6" width="88" height="88" rx="16" fill="var(--card)" stroke="var(--acc)" stroke-width="3"/><circle cx="28" cy="72" r="7" fill="var(--acc)"/><circle cx="50" cy="50" r="7" fill="var(--die)"/><circle cx="72" cy="28" r="7" fill="var(--die)"/><circle cx="28" cy="28" r="7" fill="var(--acc)"/><circle cx="72" cy="72" r="7" fill="var(--acc)"/></svg></header>
+<nav class="toc" aria-label="Table of contents"><div class="toc-inner"><button class="toc-toggle" id="tg" aria-expanded="false" aria-controls="tb">On this page <span aria-hidden="true">＋</span></button><div class="toc-body" id="tb"><p class="toc-label">On this page</p><ol>
+<li><a href="#s1">On-policy prediction with approximation</a></li>
+<li><a href="#s2">Eligibility traces</a></li>
+<li><a href="#s3">Policy gradient methods</a></li>
+<li><a href="#s4">Summary</a></li>
+<li><a href="#check">Self-check</a></li>
+</ol></div></div></nav>
+<main>
+<div class="def"><span class="lab">Syllabus.</span>
+<ul><li><b>On-policy Prediction with Approximation:</b> <a href="#vfa">Value-function Approximation</a>, <a href="#obj">The Prediction Objective</a>, <a href="#sgd">Stochastic-gradient Methods</a>, <a href="#lin">Linear Methods</a>.</li>
+<li><b>Eligibility Traces:</b> <a href="#lam">The λ-return</a>, <a href="#tdl">TD(λ)</a>, <a href="#trunc">n-step Truncated λ-return Methods</a>, <a href="#sl">Sarsa(λ)</a>.</li>
+<li><b>Policy Gradient Methods:</b> <a href="#pa">Policy Approximation and its Advantages</a>, <a href="#pgt">The Policy Gradient Theorem</a>, <a href="#rf">REINFORCE: Monte Carlo Policy Gradient</a>, <a href="#rfb">REINFORCE with Baseline</a>, <a href="#ac">Actor–Critic Methods</a>.</li></ul></div>
+
+<section id="s1"><span class="num">1</span><h2>On-policy prediction with approximation</h2>
+<h3 id="intro">Introduction to function approximation</h3>
+<p><b>Function approximation</b> is a technique in Reinforcement Learning (RL) used to estimate value functions or policies when the number of states or state-action pairs is very large or continuous.</p>
+<p>In traditional tabular reinforcement learning, the agent stores the value of each state separately in a table. However, this becomes difficult when the environment contains millions of states or continuous variables such as position, speed and temperature.</p>
+<p>Function approximation solves this problem by using a mathematical function with adjustable parameters to estimate the values of states.</p>
+<figure style="margin:24px 0"><svg viewBox="0 0 470 150" role="img" aria-label="State features (position, speed) feed a function approximator with parameters theta, which outputs the estimated value V-hat of s, theta" style="width:100%;max-width:36rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<defs><marker id="fa1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>
+<rect x="6" y="10" width="140" height="92" rx="10" fill="#dce9f9" stroke="#4a78b5" stroke-width="1.5"/>
+<text x="76" y="40" text-anchor="middle" font-size="14" font-weight="bold" fill="#1d3f6e">State features</text>
+<text x="76" y="64" text-anchor="middle" font-size="14" fill="#1d3f6e">Position</text>
+<text x="76" y="84" text-anchor="middle" font-size="14" fill="#1d3f6e">Speed</text>
+<rect x="165" y="10" width="140" height="92" rx="10" fill="#e8dcf4" stroke="#8a62b8" stroke-width="1.5"/>
+<text x="235" y="40" text-anchor="middle" font-size="14" font-weight="bold" fill="#4a2a73">Function</text>
+<text x="235" y="64" text-anchor="middle" font-size="14" fill="#4a2a73">Approximator</text>
+<text x="235" y="84" text-anchor="middle" font-size="14" fill="#4a2a73">Parameters θ</text>
+<rect x="324" y="10" width="140" height="92" rx="10" fill="#d9f0e1" stroke="#3f9a62" stroke-width="1.5"/>
+<text x="394" y="38" text-anchor="middle" font-size="14" font-weight="bold" fill="#1d5a36">Estimated</text>
+<text x="394" y="58" text-anchor="middle" font-size="14" font-weight="bold" fill="#1d5a36">Value</text>
+<text x="394" y="84" text-anchor="middle" font-size="14" fill="#1d5a36">V̂(s, θ)</text>
+<g stroke="var(--ink)" stroke-width="1.5" fill="none"><path d="M147 56H162" marker-end="url(#fa1)"/><path d="M306 56H321" marker-end="url(#fa1)"/></g>
+<text x="235" y="136" text-anchor="middle" font-size="13" fill="var(--ink)">A function estimates state value instead of a table</text></svg>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 1: Basic working of value-function approximation</figcaption></figure>
+<h4>Why is function approximation needed?</h4>
+<ol class="s"><li><b>Large state spaces:</b> storing a separate value for every state requires excessive memory.</li><li><b>Continuous state spaces:</b> variables such as speed and position can have infinitely many possible values.</li><li><b>Generalization:</b> the agent can estimate values for states that it has not previously visited.</li><li><b>Memory efficiency:</b> a smaller set of parameters can represent many states.</li><li><b>Real-world applications:</b> useful in robotics, game playing and autonomous systems.</li></ol>
+<div class="example"><p class="example-label">Example</p>
+<p>Consider a robot navigating a room. Its state may include its position and speed. Since these variables can take many different values, storing the value of every possible state is impractical.</p>
+<p>Instead, the agent learns a function that predicts the value of a state using these features.</p></div>
+<h3 id="onp">On-policy prediction</h3>
+<div class="def"><span class="lab">Definition.</span> On-policy prediction is the process of estimating the value function of a policy using experience generated by following that same policy. The objective is to estimate how good each state is when the agent follows the given policy.</div>
+<p>The state-value function is</p>
+<div class="def">$$V^\pi(s)=\mathbb{E}_\pi[G_t\mid S_t=s]$$
+Where:
+<ul><li>\(V^\pi(s)\): true value of state \(s\) under policy \(\pi\).</li><li>\(\pi\): policy followed by the agent.</li><li>\(G_t\): total discounted future reward.</li><li>\(\mathbb E_\pi\): expected value while following policy \(\pi\).</li></ul></div>
+<h4>Key features</h4>
+<ol class="s"><li>The agent follows a given policy to collect experience.</li><li>It estimates the expected future rewards under that policy.</li><li>It updates value estimates using observed rewards and transitions.</li><li>It can use Monte Carlo or TD learning methods.</li><li>It performs policy evaluation, not necessarily policy improvement.</li></ol>
+<h3 id="onpa">On-policy prediction with approximation</h3>
+<p>On-policy prediction with approximation combines two ideas:</p>
+<ul><li><b>On-policy learning:</b> learning about the policy currently being followed.</li><li><b>Function approximation:</b> using a parameterized function instead of a table to estimate state values.</li></ul>
+<p>The estimated value function is represented as</p>
+<div class="def">$$\hat V(s,\boldsymbol{\theta})\approx V^\pi(s)$$
+where \(\boldsymbol{\theta}\) represents the adjustable parameters of the approximating function.</div>
+<h3 id="vfa">Value-function approximation</h3>
+<div class="def"><span class="lab">Definition.</span> Value-function approximation is a method of estimating the value of a state or state-action pair using a mathematical function instead of storing separate values in a table.</div>
+<p>The function learns a relationship between state features and expected future rewards.</p>
+<h4>Types of value-function approximation</h4>
+<p><b>1. Linear function approximation.</b> The estimated value is calculated as a weighted sum of state features.</p>
+<div class="def">$$\hat V(s,\boldsymbol{\theta})=\theta_0+\theta_1\phi_1(s)+\theta_2\phi_2(s)+\cdots+\theta_n\phi_n(s)$$</div>
+<p><b>2. Nonlinear function approximation.</b> A nonlinear model, such as a neural network, estimates state values using more complex relationships between features and values.</p>
+<h4>State-value vs action-value approximation</h4>
+<div class="scroll"><table><thead><tr><th>State-value approximation<th>Action-value approximation</tr></thead><tbody>
+<tr><td>Estimates \(V(s)\)<td>Estimates \(Q(s,a)\)</tr>
+<tr><td>Uses features of a state<td>Uses features of a state-action pair</tr>
+<tr><td>Predicts expected return from a state<td>Predicts expected return after taking an action</tr>
+<tr><td>Common in TD prediction<td>Common in SARSA and Q-learning with approximation</tr></tbody></table></div>
+<h4>Advantages</h4>
+<ol class="s"><li>Reduces memory requirements.</li><li>Handles large and continuous state spaces.</li><li>Estimates values for unseen states.</li><li>Allows learning from shared patterns among states.</li><li>Can be implemented using linear models or neural networks.</li></ol>
+<h3 id="obj">The prediction objective</h3>
+<div class="def"><span class="lab">Definition.</span> The prediction objective in reinforcement learning is to estimate the expected cumulative future reward of states or state-action pairs under a given policy.</div>
+<p>With function approximation, the objective is to find parameters that make the estimated value function as close as possible to the true value function.</p>
+<h4>State-value prediction objective</h4>
+<p>The true state-value function is</p>
+$$V^\pi(s)=\mathbb E_\pi[G_t\mid S_t=s]$$
+<p>The function approximator predicts \(\hat V(s,\boldsymbol{\theta})\). The aim is to reduce the difference between these two values.</p>
+<h4>Mean squared value error</h4>
+<p>A common prediction objective is the Mean Squared Value Error (MSVE):</p>
+<div class="def">$$J(\boldsymbol{\theta})=\sum_s \mu(s)\left[V^\pi(s)-\hat V(s,\boldsymbol{\theta})\right]^2$$
+Where:
+<ul><li>\(J(\boldsymbol{\theta})\): prediction error objective.</li><li>\(\mu(s)\): weight assigned to state \(s\), often based on how frequently it is visited under the policy.</li><li>\(V^\pi(s)\): true state value.</li><li>\(\hat V(s,\boldsymbol{\theta})\): approximated state value.</li><li>\(\boldsymbol{\theta}\): parameters to be learned.</li></ul></div>
+<p class="note"><b>Goal:</b> find parameters that minimize the prediction error.</p>
+<p>In practice, the true value function is usually unknown. Therefore, learning methods use observed returns or bootstrapped targets to adjust the parameters.</p>
+<div class="example"><p class="example-label">Example</p>
+<p>Suppose the true value of a state is 10, but the function approximator predicts 8. The squared error is</p>
+$$(10-8)^2=4$$
+<p>The learning algorithm adjusts the parameters to reduce this error.</p></div>
+<h3 id="sgd">Stochastic-gradient methods</h3>
+<div class="def"><span class="lab">Definition.</span> Stochastic-gradient methods are optimization techniques that adjust the parameters of a function approximator using gradients calculated from individual samples or small batches of experience.</div>
+<p>The main objective is to reduce prediction error by changing the parameters in a suitable direction.</p>
+<h4>Stochastic gradient descent (SGD)</h4>
+<p>SGD updates the parameters in the direction opposite to the gradient of a loss function.</p>
+<div class="def">$$\boldsymbol{\theta}_{t+1}=\boldsymbol{\theta}_t-\alpha\nabla_{\boldsymbol{\theta}}L(\boldsymbol{\theta}_t)$$
+Where:
+<ul><li>\(\boldsymbol{\theta}_t\): current parameters.</li><li>\(\alpha\): learning rate.</li><li>\(L\): loss function.</li><li>\(\nabla_{\boldsymbol{\theta}}L\): gradient of the loss with respect to the parameters.</li></ul></div>
+<h4>Working of SGD</h4>
+<ol class="s"><li>Initialize the function parameters.</li><li>Observe a state or sample.</li><li>Calculate the predicted value.</li><li>Calculate the prediction error.</li><li>Compute the gradient.</li><li>Update the parameters to reduce the error.</li><li>Repeat using new experience.</li></ol>
+<h4>SGD for value-function approximation</h4>
+<p>Suppose a sampled target return is \(U_t\). The squared-error loss can be written as</p>
+$$L_t(\boldsymbol{\theta})=\frac12\left[U_t-\hat V(S_t,\boldsymbol{\theta})\right]^2$$
+<p>Treating \(U_t\) as a fixed target, the gradient update is</p>
+<div class="def">$$\boldsymbol{\theta}_{t+1}=\boldsymbol{\theta}_t+\alpha\left[U_t-\hat V(S_t,\boldsymbol{\theta}_t)\right]\nabla_{\boldsymbol{\theta}}\hat V(S_t,\boldsymbol{\theta}_t)$$</div>
+<p>This adjusts the parameters according to the prediction error and the sensitivity of the predicted value to each parameter.</p>
+<h4>TD prediction with function approximation</h4>
+<p>For one-step TD prediction, the TD error is</p>
+<div class="def">$$\delta_t=R_{t+1}+\gamma\hat V(S_{t+1},\boldsymbol{\theta}_t)-\hat V(S_t,\boldsymbol{\theta}_t)$$</div>
+<p>The parameter update is</p>
+<div class="def">$$\boldsymbol{\theta}_{t+1}=\boldsymbol{\theta}_t+\alpha\delta_t\nabla_{\boldsymbol{\theta}}\hat V(S_t,\boldsymbol{\theta}_t)$$</div>
+<p class="note">This is called a <b>semi-gradient TD(0)</b> update, because the bootstrapped next-state target is treated as fixed when calculating the gradient.</p>
+<h4>Advantages of stochastic-gradient methods</h4>
+<ol class="s"><li>Can update parameters after observing a single sample.</li><li>Does not require processing the entire dataset for each update.</li><li>Suitable for large and continuous state spaces.</li><li>Can be used with linear models and neural networks.</li></ol>
+<h4>Limitations</h4>
+<ol class="s"><li>Gradients calculated from small samples may be noisy.</li><li>Learning depends on the choice of learning rate.</li><li>Large updates may cause instability.</li><li>Function approximation and bootstrapping can introduce convergence difficulties.</li></ol>
+<h3 id="lin">Linear methods</h3>
+<div class="def"><span class="lab">Definition.</span> Linear function approximation is a method in which the estimated value of a state is represented as a weighted sum of its features. The approximating function is linear in its adjustable parameters.</div>
+<h4>Linear value-function equation</h4>
+<div class="def">$$\hat V(s,\mathbf w)=\mathbf w^T\boldsymbol{\phi}(s)$$
+or
+$$\hat V(s,\mathbf w)=\sum_{i=1}^{d}w_i\phi_i(s)$$
+Where:
+<ul><li>\(\mathbf w\): weight vector.</li><li>\(\boldsymbol{\phi}(s)\): feature vector representing state \(s\).</li><li>\(w_i\): weight of feature \(i\).</li><li>\(\phi_i(s)\): value of feature \(i\).</li><li>\(d\): number of features.</li></ul></div>
+<div class="example"><p class="example-label">Example</p>
+<p>Consider a robot whose state is represented by two features: position = 2 and speed = 3. Suppose the weights are \(w_1=0.5\) and \(w_2=0.8\). The approximated value is</p>
+$$\hat V(s,\mathbf w)=w_1\phi_1(s)+w_2\phi_2(s)=0.5(2)+0.8(3)=1+2.4$$
+$$\hat V(s,\mathbf w)=3.4$$
+<p>Therefore, the estimated value of the robot's state is 3.4.</p></div>
+<h4>TD(0) with linear function approximation</h4>
+<p>The TD error is</p>
+<div class="def">$$\delta_t=R_{t+1}+\gamma\mathbf w_t^T\boldsymbol{\phi}(S_{t+1})-\mathbf w_t^T\boldsymbol{\phi}(S_t)$$</div>
+<p>Since the gradient of the linear value function is</p>
+$$\nabla_{\mathbf w}\hat V(s,\mathbf w)=\boldsymbol{\phi}(s)$$
+<p>the weight update becomes</p>
+<div class="def">$$\mathbf w_{t+1}=\mathbf w_t+\alpha\delta_t\boldsymbol{\phi}(S_t)$$</div>
+<p>Thus, linear TD prediction updates the weights using the TD error and the feature vector of the current state.</p>
+<h4>Advantages of linear methods</h4>
+<ol class="s"><li><b>Simplicity:</b> easy to understand and implement.</li><li><b>Computational efficiency:</b> requires relatively simple calculations.</li><li><b>Low memory requirement:</b> stores weights instead of a large value table.</li><li><b>Interpretability:</b> the weights indicate how the features contribute to the estimated value.</li><li><b>Generalization:</b> can estimate values for states not previously encountered.</li></ol>
+<h4>Limitations</h4>
+<ol class="s"><li>Cannot easily represent complex nonlinear relationships with simple features.</li><li>Performance depends on selecting suitable state features.</li><li>May produce inaccurate estimates if important features are missing.</li><li>Requires appropriate learning rates and feature scaling for effective learning.</li></ol>
+<h3 id="cmp">Comparison: tabular methods vs function approximation</h3>
+<div class="scroll"><table><thead><tr><th>Feature<th>Tabular methods<th>Function approximation</tr></thead><tbody>
+<tr><td>Representation<td>Separate value for each state<td>Parameterized mathematical function</tr>
+<tr><td>State space<td>Small, discrete<td>Large or continuous</tr>
+<tr><td>Memory<td>Grows with number of states<td>Depends on number of parameters</tr>
+<tr><td>Generalization<td>Usually no generalization between different states<td>Can generalize across states</tr>
+<tr><td>Examples<td>Tabular TD(0), SARSA<td>Linear TD, neural-network value approximation</tr>
+<tr><td>Complexity<td>Simple for small problems<td>Requires parameter optimization</tr>
+<tr><td>Learning stability<td>Well understood in tabular settings<td>Depends on approximator and algorithm</tr></tbody></table></div>
+<h3 id="sum1">Summary of on-policy prediction with approximation</h3>
+<div class="scroll"><table><thead><tr><th>Topic<th>Main idea<th>Important equation</tr></thead><tbody>
+<tr><td>On-policy prediction<td>Evaluate the policy being followed<td>\(V^\pi(s)=\mathbb E_\pi[G_t\mid S_t=s]\)</tr>
+<tr><td>Value-function approximation<td>Represent state values using parameters<td>\(\hat V(s,\boldsymbol{\theta})\)</tr>
+<tr><td>Prediction objective<td>Minimize state-value estimation error<td>\(J(\boldsymbol{\theta})=\sum_s\mu(s)[V^\pi(s)-\hat V(s,\boldsymbol{\theta})]^2\)</tr>
+<tr><td>Stochastic-gradient methods<td>Update parameters using sampled gradients<td>\(\boldsymbol{\theta}\leftarrow\boldsymbol{\theta}-\alpha\nabla L\)</tr>
+<tr><td>Linear methods<td>Weighted combination of features<td>\(\hat V(s,\mathbf w)=\mathbf w^T\boldsymbol{\phi}(s)\)</tr>
+<tr><td>Linear TD(0)<td>Use TD error to update feature weights<td>\(\mathbf w_{t+1}=\mathbf w_t+\alpha\delta_t\boldsymbol{\phi}(S_t)\)</tr></tbody></table></div>
+<h3>Conclusion</h3>
+<p>On-policy prediction with function approximation is used to estimate the value function of a given policy in large or continuous state spaces.</p>
+<p>Instead of storing a separate value for every state, the agent uses a parameterized function to predict state values.</p>
+<p>Stochastic-gradient methods adjust the parameters to reduce prediction errors, while linear methods provide a simple and computationally efficient way to represent value functions using state features.</p>
+<p class="note"><b>Key point:</b> in tabular TD learning, the agent updates stored state values. In TD learning with function approximation, the agent updates the parameters of a function that estimates those values.</p></section>
+
+<section id="s2"><span class="num">2</span><h2>Eligibility traces</h2>
+<h3 id="etintro">Introduction to eligibility traces</h3>
+<div class="def"><span class="lab">Definition.</span> Eligibility traces are a technique in Reinforcement Learning (RL) used to assign credit to previously visited states or state-action pairs based on their contribution to future rewards.</div>
+<p>They combine ideas from two important learning methods:</p>
+<ul><li><b>Monte Carlo (MC) methods:</b> learn from complete episode returns.</li><li><b>Temporal-Difference (TD) methods:</b> update value estimates using immediate rewards and estimated future values.</li></ul>
+<p>Eligibility traces allow the agent to update multiple previously visited states instead of updating only the current state.</p>
+<h3 id="etwhy">Why are eligibility traces needed?</h3>
+<p>In ordinary TD(0) learning, only the value of the current state is updated after each transition. However, a reward received now may be related to several states visited earlier.</p>
+<p>Eligibility traces help solve this <b>credit assignment problem</b> by allowing current learning updates to influence earlier states.</p>
+<div class="example"><p class="example-label">Example</p>
+<p>Consider a robot moving through four states before receiving a reward.</p>
+<svg viewBox="0 0 400 140" role="img" aria-label="States S1 to S4 in a row; a reward after S4 sends credit back to S1, S2 and S3" style="width:100%;max-width:34rem;display:block;margin:10px auto;font-family:Newsreader,Georgia,serif">
+<defs><marker id="ea2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker></defs>
+<g stroke="var(--ink)" stroke-width="1.5" fill="none"><path d="M54 38H92" marker-end="url(#ea2)"/><path d="M148 38H186" marker-end="url(#ea2)"/><path d="M242 38H280" marker-end="url(#ea2)"/><path d="M336 38H372" marker-end="url(#ea2)"/></g>
+<g fill="var(--card)" stroke="var(--acc)" stroke-width="1.8"><circle cx="30" cy="38" r="24"/><circle cx="124" cy="38" r="24"/><circle cx="218" cy="38" r="24"/><circle cx="312" cy="38" r="24"/></g>
+<g fill="var(--deep2)" font-size="15" font-weight="bold" text-anchor="middle"><text x="30" y="43">S₁</text><text x="124" y="43">S₂</text><text x="218" y="43">S₃</text><text x="312" y="43">S₄</text></g>
+<text x="372" y="26" text-anchor="middle" font-size="12" fill="var(--dietxt)" font-weight="bold">Reward</text>
+<path d="M312 70V96H30V70" fill="none" stroke="var(--acc)" stroke-width="1.6" stroke-dasharray="5 4"/>
+<text x="171" y="120" text-anchor="middle" font-size="12" fill="var(--acc)">Credit is passed back to earlier states</text></svg>
+<p style="text-align:center;color:var(--mut);font-size:.95rem;margin:0 0 12px">Figure 1: Credit assignment using eligibility traces</p>
+<p>When the robot receives a reward after visiting \(S_4\), eligibility traces help update earlier states such as \(S_1\), \(S_2\) and \(S_3\). Recently visited states generally have larger eligibility traces and receive stronger updates.</p></div>
+<h3 id="etwhat">What is an eligibility trace?</h3>
+<p>An eligibility trace is a temporary record that indicates how strongly a state or state-action pair should be affected by the current learning update. The trace increases when the state is visited and gradually decreases over time.</p>
+<h4>Key concepts</h4>
+<ol class="s"><li><b>Eligibility:</b> determines how strongly a state contributes to an update.</li><li><b>Decay:</b> eligibility traces decrease over time when states are not revisited.</li><li><b>Credit assignment:</b> allows learning updates to affect previously visited states.</li><li><b>Memory of past visits:</b> maintains a temporary record of recently visited states.</li><li><b>Multi-step learning:</b> helps information from later rewards influence earlier states.</li></ol>
+<h3 id="eteq">Eligibility trace equation</h3>
+<p>For tabular TD learning with accumulating eligibility traces:</p>
+<div class="def">$$e_t(s)=\gamma\lambda e_{t-1}(s)+\mathbb I(S_t=s)$$</div>
+<div class="scroll"><table><thead><tr><th>Symbol<th>Meaning</tr></thead><tbody>
+<tr><td>\(e_t(s)\)<td>Eligibility trace of state \(s\) at time \(t\)</tr>
+<tr><td>\(e_{t-1}(s)\)<td>Previous eligibility trace</tr>
+<tr><td>\(\gamma\)<td>Discount factor</tr>
+<tr><td>\(\lambda\)<td>Trace-decay parameter, between 0 and 1</tr>
+<tr><td>\(\mathbb I(S_t=s)\)<td>Equals 1 if state \(s\) is visited, otherwise 0</tr></tbody></table></div>
+<h4>Explanation</h4>
+<ul><li>When a state is visited, its eligibility increases.</li><li>When the state is not visited, its eligibility decreases by the factor \(\gamma\lambda\).</li><li>A state visited repeatedly may accumulate a larger eligibility trace.</li></ul>
+<h3 id="etlam">Role of the λ parameter</h3>
+<p>The parameter \(\lambda\) controls how long information about previously visited states remains influential.</p>
+<div class="def">$$0\leq\lambda\leq1$$</div>
+<div class="scroll"><table><thead><tr><th>λ value<th>Effect</tr></thead><tbody>
+<tr><td>λ = 0<td>Only the current state receives the update, as in TD(0)</tr>
+<tr><td>Small λ<td>Past eligibility traces decay rapidly</tr>
+<tr><td>Large λ<td>Past eligibility traces decay more slowly</tr>
+<tr><td>λ = 1<td>Maximum trace persistence for a given γ; related to full-return learning in episodic tasks</tr></tbody></table></div>
+<p class="note"><b>Important:</b> the actual trace-decay factor is \(\gamma\lambda\), not \(\lambda\) alone.</p>
+<h3 id="etnum">Numerical example of eligibility trace decay</h3>
+<div class="example"><p class="example-label">Example</p>
+<p>Suppose \(\gamma=0.9\) and \(\lambda=0.8\). The decay factor is</p>
+$$\gamma\lambda=0.9\times0.8=0.72$$
+<p>Assume the eligibility trace of a state is initially 1 after its first visit. If the state is not revisited, its trace decreases as follows.</p>
+<div class="scroll"><table><thead><tr><th>Time<th>Eligibility trace</tr></thead><tbody>
+<tr><td>Initial visit<td>1.000</tr><tr><td>After 1 step<td>0.720</tr><tr><td>After 2 steps<td>0.518</tr><tr><td>After 3 steps<td>0.373</tr><tr><td>After 4 steps<td>0.269</tr></tbody></table></div></div>
+<figure style="margin:20px 0"><svg viewBox="0 0 360 210" role="img" aria-label="Line chart: eligibility trace falls from 1.000 to 0.269 over four steps for gamma 0.9 and lambda 0.8" style="width:100%;max-width:30rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<g stroke="var(--rule)" stroke-width="1"><path d="M50 160H330M50 125H330M50 90H330M50 55H330M50 20H330"/></g>
+<g stroke="var(--mut)" stroke-width="1.3"><path d="M50 20V160H330"/></g>
+<g fill="var(--ink)" font-size="11" text-anchor="end"><text x="44" y="164">0</text><text x="44" y="129">0.25</text><text x="44" y="94">0.5</text><text x="44" y="59">0.75</text><text x="44" y="24">1</text></g>
+<g fill="var(--ink)" font-size="11" text-anchor="middle"><text x="50" y="177">0</text><text x="120" y="177">1</text><text x="190" y="177">2</text><text x="260" y="177">3</text><text x="330" y="177">4</text></g>
+<polyline points="50,20 120,59.2 190,87.5 260,107.8 330,122.3" fill="none" stroke="var(--acc)" stroke-width="2.2"/>
+<g fill="var(--acc)"><circle cx="50" cy="20" r="4"/><circle cx="120" cy="59.2" r="4"/><circle cx="190" cy="87.5" r="4"/><circle cx="260" cy="107.8" r="4"/><circle cx="330" cy="122.3" r="4"/></g>
+<text x="190" y="199" text-anchor="middle" font-size="11" fill="var(--ink)">Steps since last visit</text></svg>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Eligibility trace for γ = 0.9 and λ = 0.8, assuming no revisits</figcaption></figure>
+<p>The graph shows that eligibility decreases as time passes. Therefore, more recently visited states generally receive stronger influence from the current TD error.</p>
+<h3 id="lam">The λ-return</h3>
+<p>The n-step return uses exactly \(n\) rewards before bootstrapping. The λ-return avoids choosing a single \(n\) by taking a weighted average of all n-step returns.</p>
+<div class="def"><span class="lab">Definition.</span> The λ-return is a geometrically weighted average of n-step returns, with weights that decrease by a factor of \(\lambda\) for each additional step.
+$$G_t^{\lambda}=(1-\lambda)\sum_{n=1}^{\infty}\lambda^{n-1}G_{t:t+n}$$
+where the n-step return is
+$$G_{t:t+n}=R_{t+1}+\gamma R_{t+2}+\cdots+\gamma^{n-1}R_{t+n}+\gamma^nV(S_{t+n})$$</div>
+<p>In an episodic task that terminates at time \(T\), all n-step returns with \(t+n\ge T\) equal the ordinary return \(G_t\), so the λ-return becomes</p>
+<div class="def">$$G_t^{\lambda}=(1-\lambda)\sum_{n=1}^{T-t-1}\lambda^{n-1}G_{t:t+n}+\lambda^{T-t-1}G_t$$</div>
+<h4>Weights of the n-step returns</h4>
+<div class="scroll"><table><thead><tr><th>n-step return<th>Weight</tr></thead><tbody>
+<tr><td>\(G_{t:t+1}\)<td>\(1-\lambda\)</tr>
+<tr><td>\(G_{t:t+2}\)<td>\((1-\lambda)\lambda\)</tr>
+<tr><td>\(G_{t:t+3}\)<td>\((1-\lambda)\lambda^2\)</tr>
+<tr><td>\(\vdots\)<td>\(\vdots\)</tr>
+<tr><td>Full return \(G_t\) (episodic)<td>\(\lambda^{T-t-1}\)</tr></tbody></table></div>
+<p>The weights add up to 1. Shorter returns receive larger weights.</p>
+<h4>Special cases</h4>
+<div class="scroll"><table><thead><tr><th>λ value<th>λ-return<th>Meaning</tr></thead><tbody>
+<tr><td>λ = 0<td>\(G_t^0=G_{t:t+1}\)<td>One-step TD return, as in TD(0)</tr>
+<tr><td>λ = 1<td>\(G_t^1=G_t\)<td>Monte Carlo return (episodic tasks)</tr>
+<tr><td>0 &lt; λ &lt; 1<td>Weighted average<td>Intermediate between TD and Monte Carlo</tr></tbody></table></div>
+<h4>Forward-view update</h4>
+<p>The offline λ-return algorithm updates the value using the λ-return as the target:</p>
+<div class="def">$$V(S_t)\leftarrow V(S_t)+\alpha\left[G_t^{\lambda}-V(S_t)\right]$$</div>
+<p>This is called the <b>forward view</b>, because each state looks forward in time at the rewards that follow it. It needs the whole episode before the λ-return can be computed. TD(λ), with its eligibility traces, is the <b>backward view</b>: it approximates the same update online, using only the current TD error and the traces of past states.</p>
+<div class="example"><p class="example-label">Example: computing a λ-return</p>
+<p>An episode ends after three rewards from time \(t\): \(R_{t+1}=1\), \(R_{t+2}=2\), \(R_{t+3}=3\). Let \(\gamma=0.9\), \(\lambda=0.5\), \(V(S_{t+1})=4\) and \(V(S_{t+2})=4\).</p>
+$$G_{t:t+1}=1+0.9(4)=4.6$$
+$$G_{t:t+2}=1+0.9(2)+0.9^2(4)=6.04$$
+$$G_t=1+0.9(2)+0.9^2(3)=5.23$$
+<p>With \(T-t=3\), the λ-return is</p>
+$$G_t^{\lambda}=(1-\lambda)\left[G_{t:t+1}+\lambda G_{t:t+2}\right]+\lambda^{2}G_t$$
+$$G_t^{\lambda}=0.5\left[4.6+0.5(6.04)\right]+0.25(5.23)=3.81+1.3075=5.1175$$
+<p>The weights are 0.5, 0.25 and 0.25, which sum to 1.</p></div>
+<h4>Advantages and limitations</h4>
+<ul><li><b>Advantage:</b> one parameter \(\lambda\) smoothly balances bootstrapping (low variance, some bias) against full returns (no bootstrap bias, higher variance).</li><li><b>Limitation:</b> the λ-return cannot be computed until the episode ends, so the forward view is not directly online.</li></ul>
+<h3 id="tdl">TD(λ)</h3>
+<h4>Eligibility traces in TD(λ)</h4>
+<p>Eligibility traces are commonly used in the TD(λ) algorithm. TD(λ) extends TD(0) by allowing learning updates to affect multiple previously visited states.</p>
+<p><b>Step 1: calculate the TD error.</b></p>
+<div class="def">$$\delta_t=R_{t+1}+\gamma V(S_{t+1})-V(S_t)$$
+Where:
+<ul><li>\(R_{t+1}\): immediate reward.</li><li>\(V(S_t)\): current-state value.</li><li>\(V(S_{t+1})\): next-state value.</li><li>\(\delta_t\): TD error.</li></ul></div>
+<p><b>Step 2: update eligibility traces.</b></p>
+$$e_t(s)=\gamma\lambda e_{t-1}(s)+\mathbb I(S_t=s)$$
+<p><b>Step 3: update state values.</b></p>
+<div class="def">$$V(s)\leftarrow V(s)+\alpha\delta_t e_t(s)$$
+This update is applied to all states with nonzero eligibility traces, not just the current state. Here \(\alpha\) is the learning rate, \(\delta_t\) is the TD error and \(e_t(s)\) is the eligibility trace of state \(s\).</div>
+<h4>Eligibility traces with function approximation</h4>
+<p>When function approximation is used, state values are represented by a parameterized function \(\hat V(s,\boldsymbol{\theta})\). Instead of maintaining separate value estimates for every state, the agent updates the parameters \(\boldsymbol{\theta}\).</p>
+<p>For accumulating eligibility traces:</p>
+<div class="def">$$\mathbf e_t=\gamma\lambda\mathbf e_{t-1}+\nabla_{\boldsymbol{\theta}}\hat V(S_t,\boldsymbol{\theta}_t)$$</div>
+<p>The semi-gradient TD(λ) parameter update is</p>
+<div class="def">$$\boldsymbol{\theta}_{t+1}=\boldsymbol{\theta}_t+\alpha\delta_t\mathbf e_t$$</div>
+<p>Eligibility traces now accumulate gradients associated with previously visited states. This allows function-approximation parameters to be updated using information from several earlier states.</p>
+<h3 id="trunc">n-step truncated λ-return methods</h3>
+<p>The ordinary λ-return looks arbitrarily far ahead, so it is unavailable until the episode ends. Truncating it at a finite horizon \(h\) gives a version that can be used online.</p>
+<div class="def"><span class="lab">Definition.</span> The truncated λ-return up to horizon \(h\) is a weighted average of the n-step returns that can be formed before time \(h\), with the remaining weight placed on the last return \(G_{t:h}\).
+$$G_{t:h}^{\lambda}=(1-\lambda)\sum_{n=1}^{h-t-1}\lambda^{n-1}G_{t:t+n}+\lambda^{h-t-1}G_{t:h}$$
+For truncated TD(λ), the horizon is \(h=t+n\), so the update for \(S_t\) can be made at time \(t+n\):
+$$V(S_t)\leftarrow V(S_t)+\alpha\left[G_{t:t+n}^{\lambda}-V(S_t)\right]$$</div>
+<h4>Key ideas</h4>
+<ol class="s"><li>Only the next \(n\) rewards are used, so the update for \(S_t\) is delayed by \(n\) steps rather than by the length of the episode.</li><li>The effect of \(\lambda\) is kept, because n-step returns shorter than \(n\) are still averaged.</li><li>Only recent states and rewards need to be stored.</li><li>For large \(n\), the truncated λ-return is close to the full λ-return.</li></ol>
+<h4>Special cases</h4>
+<div class="scroll"><table><thead><tr><th>Setting<th>Result</tr></thead><tbody>
+<tr><td>λ = 0<td>One-step TD return</tr>
+<tr><td>λ = 1<td>Ordinary n-step return \(G_{t:t+n}\)</tr>
+<tr><td>n → ∞ (or n ≥ remaining episode length)<td>The full λ-return</tr></tbody></table></div>
+<h4>Comparison with other multi-step methods</h4>
+<div class="scroll"><table><thead><tr><th>Feature<th>n-step TD<th>λ-return (forward view)<th>Truncated TD(λ)</tr></thead><tbody>
+<tr><td>Target<td>Single n-step return<td>Average of all n-step returns<td>Average of n-step returns up to horizon \(h\)</tr>
+<tr><td>Update delay<td>n steps<td>End of episode<td>n steps</tr>
+<tr><td>Parameters<td>\(n\)<td>\(\lambda\)<td>\(n\) and \(\lambda\)</tr>
+<tr><td>Storage<td>Recent n steps<td>Whole episode<td>Recent n steps</tr></tbody></table></div>
+<p class="note">Truncated TD(λ) combines the practicality of n-step methods with the smooth averaging of the λ-return.</p>
+<h3 id="sl">Sarsa(λ)</h3>
+<div class="def"><span class="lab">Definition.</span> Sarsa(λ) is an on-policy TD control algorithm that extends SARSA with eligibility traces. It keeps a trace for every state-action pair, so one TD error updates all recently visited state-action pairs.</div>
+<h4>Eligibility traces for state-action pairs</h4>
+<p>For accumulating traces:</p>
+<div class="def">$$e_t(s,a)=\gamma\lambda e_{t-1}(s,a)+\mathbb I(S_t=s,A_t=a)$$</div>
+<p>The trace of the pair just visited increases by 1, and all other traces decay by \(\gamma\lambda\). All traces are set to zero at the start of each episode.</p>
+<h4>Sarsa(λ) update</h4>
+<p>The TD error is the SARSA error:</p>
+<div class="def">$$\delta_t=R_{t+1}+\gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)$$</div>
+<p>Every state-action pair is then updated in proportion to its trace:</p>
+<div class="def">$$Q(s,a)\leftarrow Q(s,a)+\alpha\,\delta_t\,e_t(s,a)\qquad\text{for all }s,a$$
+For a terminal next state, \(Q(S_{t+1},A_{t+1})\) is taken as zero.</div>
+<h4>Sarsa(λ) algorithm</h4>
+<ol class="s"><li>Initialize \(Q(s,a)\) arbitrarily.</li><li>For each episode, set \(e(s,a)=0\) for all pairs and observe the initial state \(S\).</li><li>Choose \(A\) using a policy derived from \(Q\), such as \(\varepsilon\)-greedy.</li><li>Take action \(A\), observe \(R\) and \(S'\), then choose \(A'\) from \(S'\) using the same policy.</li><li>Calculate \(\delta=R+\gamma Q(S',A')-Q(S,A)\).</li><li>Increase the trace of \((S,A)\) by 1.</li><li>For all pairs, update \(Q(s,a)\leftarrow Q(s,a)+\alpha\delta e(s,a)\) and \(e(s,a)\leftarrow\gamma\lambda e(s,a)\).</li><li>Set \(S\leftarrow S'\) and \(A\leftarrow A'\). Repeat until the episode ends.</li></ol>
+<div class="example"><p class="example-label">Example: one Sarsa(λ) update</p>
+<p>Let \(\gamma=0.9\), \(\lambda=0.8\), \(\alpha=0.1\) and suppose the TD error is \(\delta_t=2\). Three state-action pairs have been visited recently, with traces 1 (current), \(0.72\) (one step ago) and \(0.72^2\approx0.518\) (two steps ago).</p>
+<div class="scroll"><table><thead><tr><th>Pair<th>Trace \(e\)<th>Change \(\alpha\delta e\)</tr></thead><tbody>
+<tr><td>Current<td>1.000<td>0.1(2)(1.000) = 0.200</tr>
+<tr><td>One step ago<td>0.720<td>0.1(2)(0.720) = 0.144</tr>
+<tr><td>Two steps ago<td>0.518<td>0.1(2)(0.518) ≈ 0.104</tr></tbody></table></div>
+<p>The current pair receives the largest update, while earlier pairs still share in the credit.</p></div>
+<h4>Sarsa(λ) with function approximation</h4>
+<p>With a parameterized action-value function \(\hat Q(s,a,\mathbf w)\), the trace becomes a vector with the same size as \(\mathbf w\):</p>
+<div class="def">$$\mathbf e_t=\gamma\lambda\mathbf e_{t-1}+\nabla_{\mathbf w}\hat Q(S_t,A_t,\mathbf w_t)$$
+$$\mathbf w_{t+1}=\mathbf w_t+\alpha\,\delta_t\,\mathbf e_t$$
+where \(\delta_t=R_{t+1}+\gamma\hat Q(S_{t+1},A_{t+1},\mathbf w_t)-\hat Q(S_t,A_t,\mathbf w_t)\).</div>
+<h4>SARSA vs Sarsa(λ)</h4>
+<div class="scroll"><table><thead><tr><th>Feature<th>SARSA<th>Sarsa(λ)</tr></thead><tbody>
+<tr><td>Eligibility traces<td>Not used<td>Used for every state-action pair</tr>
+<tr><td>Pairs updated per step<td>Current pair only<td>All pairs with nonzero trace</tr>
+<tr><td>Credit assignment<td>One step back<td>Spread over many earlier steps</tr>
+<tr><td>Special case<td>Equals Sarsa(λ) with λ = 0<td>—</tr>
+<tr><td>Computation<td>Lower<td>Higher, because traces are updated every step</tr></tbody></table></div>
+<h4>Advantages and limitations</h4>
+<ul><li><b>Advantages:</b> faster propagation of delayed rewards, online updates, on-policy learning of the policy actually followed.</li><li><b>Limitations:</b> extra memory and computation for traces, sensitivity to \(\lambda\) and \(\alpha\), and care needed when combined with function approximation.</li></ul>
+<p class="note">Sarsa(λ) is the control counterpart of TD(λ): TD(λ) estimates \(V\), while Sarsa(λ) estimates \(Q\) and improves the policy.</p>
+<h3 id="etalg">Algorithms that use eligibility traces</h3>
+<div class="scroll"><table><thead><tr><th>Algorithm<th>Purpose</tr></thead><tbody>
+<tr><td>TD(λ)<td>Uses eligibility traces for state-value prediction</tr>
+<tr><td>SARSA(λ)<td>Uses eligibility traces for on-policy TD control</tr>
+<tr><td>Q(λ) variants<td>Extend action-value learning with eligibility traces</tr></tbody></table></div>
+<p>These algorithms use traces to propagate learning updates through previously visited states or state-action pairs.</p>
+<h3 id="etadv">Advantages of eligibility traces</h3>
+<ol class="s"><li><b>Improved credit assignment:</b> rewards can influence earlier visited states.</li><li><b>Faster reward propagation:</b> information from delayed rewards can reach earlier states more quickly.</li><li><b>Online learning:</b> value estimates can be updated after each transition.</li><li><b>Flexible learning:</b> the λ parameter controls the influence of past states.</li><li><b>Combination of TD and MC ideas:</b> connects one-step TD updates with longer-return learning.</li></ol>
+<h3 id="etdis">Disadvantages of eligibility traces</h3>
+<ol class="s"><li><b>Additional memory:</b> eligibility traces must be maintained for states or model parameters.</li><li><b>Computational overhead:</b> traces need to be updated at every step.</li><li><b>Parameter tuning:</b> choosing an appropriate λ value can be difficult.</li><li><b>Learning instability:</b> some combinations of bootstrapping and function approximation require care to ensure stable learning.</li></ol>
+<h3 id="etcmp">TD(0) vs TD(λ) with eligibility traces</h3>
+<div class="scroll"><table><thead><tr><th>Feature<th>TD(0)<th>TD(λ)</tr></thead><tbody>
+<tr><td>Eligibility traces<td>Not required<td>Used in backward-view implementation</tr>
+<tr><td>States affected per update<td>Current state<td>Current and previously visited states</tr>
+<tr><td>Learning information<td>One-step return<td>Multiple-step credit assignment</tr>
+<tr><td>Parameter λ<td>0<td>Between 0 and 1</tr>
+<tr><td>Reward propagation<td>Usually more gradual<td>Can reach earlier states more quickly</tr>
+<tr><td>Computation<td>Simpler<td>Additional trace calculations</tr></tbody></table></div>
+<h3>Conclusion</h3>
+<p>Eligibility traces are an important reinforcement learning mechanism that allows an agent to assign credit to previously visited states.</p>
+<p>They maintain a temporary record of past states, with eligibility usually decreasing over time. By combining TD errors with these traces, algorithms such as TD(λ) and SARSA(λ) can update multiple states or model parameters.</p>
+<p class="note"><b>Key point:</b> TD(0) updates the current state's value, while eligibility traces allow the current TD error to influence previously visited states according to their trace values.</p></section>
+
+<section id="s3"><span class="num">3</span><h2>Policy gradient methods</h2>
+<h3 id="pgintro">Introduction to policy gradient methods</h3>
+<div class="def"><span class="lab">Definition.</span> Policy gradient (PG) methods are reinforcement learning algorithms that directly learn and improve a policy by adjusting its parameters to maximize expected cumulative rewards.</div>
+<p>Unlike value-based methods such as Q-learning and SARSA, which learn value functions and derive policies from them, policy gradient methods directly optimize the policy.</p>
+<h4>Key features</h4>
+<ol class="s"><li><b>Direct policy optimization:</b> learns the policy directly instead of deriving it from a Q-table.</li><li><b>Parameterized policy:</b> represents the policy using adjustable parameters \(\boldsymbol{\theta}\).</li><li><b>Gradient ascent:</b> adjusts policy parameters in the direction that increases expected rewards.</li><li><b>Stochastic policies:</b> can select actions based on probabilities.</li><li><b>Continuous action spaces:</b> suitable for tasks involving continuous actions, such as robot speed and steering control.</li></ol>
+<h4>Policy gradient vs value-based methods</h4>
+<div class="scroll"><table><thead><tr><th>Value-based methods<th>Policy gradient methods</tr></thead><tbody>
+<tr><td>Learn value functions \(V(s)\) or \(Q(s,a)\)<td>Directly learn a policy \(\pi_\theta(a\mid s)\)</tr>
+<tr><td>Select actions using estimated values<td>Select actions using the parameterized policy</tr>
+<tr><td>Examples: Q-learning, SARSA<td>Examples: REINFORCE, policy gradient actor</tr>
+<tr><td>Often require additional techniques for continuous actions<td>Naturally support continuous action distributions</tr></tbody></table></div>
+<h3 id="pa">Policy approximation and its advantages</h3>
+<div class="def"><span class="lab">Definition.</span> Policy approximation is a technique in which a policy is represented using a parameterized mathematical function instead of storing a separate action-selection rule for every state.
+<p style="margin-top:12px">The policy is expressed as</p>
+$$\pi_\theta(a\mid s)$$
+Where:
+<ul><li>\(\pi_\theta(a\mid s)\): probability of selecting action \(a\) in state \(s\).</li><li>\(s\): current state.</li><li>\(a\): action.</li><li>\(\theta\): policy parameters or weights.</li></ul></div>
+<h4>Why is policy approximation needed?</h4>
+<ol class="s"><li>Large state and action spaces make tabular policies impractical.</li><li>Continuous states and actions cannot be represented completely by finite tables.</li><li>Parameterized functions allow generalization to unseen states.</li><li>The policy can be optimized using gradient-based methods.</li></ol>
+<h4>Types of policy approximation</h4>
+<p><b>1. Linear policy approximation.</b> Uses a linear combination of features to calculate action preferences. A softmax function converts these preferences into action probabilities.</p>
+<div class="def">$$\pi_\theta(a\mid s)=\frac{\exp(\theta^T\phi(s,a))}{\sum_{a'}\exp(\theta^T\phi(s,a'))}$$
+Here, \(\phi(s,a)\) represents features of the state-action pair.</div>
+<p><b>2. Nonlinear policy approximation.</b> Uses nonlinear models, such as neural networks, to represent more complex relationships between states and actions. For example, a neural network may receive a robot's position and speed and output probabilities for different actions.</p>
+<h4>Advantages of policy approximation</h4>
+<ol class="s"><li><b>Scalability:</b> handles large and continuous state spaces.</li><li><b>Memory efficiency:</b> stores model parameters instead of a large policy table.</li><li><b>Generalization:</b> can select actions in previously unseen states.</li><li><b>Smooth policy updates:</b> gradually adjusts action probabilities.</li><li><b>Stochastic exploration:</b> supports probability-based action selection.</li></ol>
+<h3 id="pgwork">Working of policy gradient methods</h3>
+<p>The agent selects actions using the current policy, receives rewards, and adjusts policy parameters to improve future decisions.</p>
+<figure style="margin:24px 0"><svg viewBox="0 0 340 380" role="img" aria-label="Flowchart: initialize policy parameters theta, observe current state, select action using the policy, execute action and receive reward, calculate gradient and update theta, then repeat" style="width:100%;max-width:24rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<defs><marker id="pg1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink)"/></marker><marker id="pg2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4a78b5"/></marker></defs>
+<g fill="#dce9f9" stroke="#4a78b5" stroke-width="1.4"><rect x="60" y="6" width="230" height="44" rx="8"/><rect x="60" y="76" width="230" height="44" rx="8"/><rect x="60" y="146" width="230" height="44" rx="8"/><rect x="60" y="216" width="230" height="44" rx="8"/></g>
+<rect x="60" y="286" width="230" height="44" rx="8" fill="#d9f0e1" stroke="#3f9a62" stroke-width="1.4"/>
+<g font-size="12.5" font-weight="bold" text-anchor="middle" fill="#1d3f6e"><text x="175" y="33">Initialize policy parameters θ</text><text x="175" y="103">Observe current state Sₜ</text><text x="175" y="173">Select action using π_θ(a | s)</text><text x="175" y="243">Execute action and receive reward</text><text x="175" y="313" fill="#1d5a36">Calculate gradient and update θ</text></g>
+<g stroke="var(--ink)" stroke-width="1.5" fill="none"><path d="M175 50V74" marker-end="url(#pg1)"/><path d="M175 120V144" marker-end="url(#pg1)"/><path d="M175 190V214" marker-end="url(#pg1)"/><path d="M175 260V284" marker-end="url(#pg1)"/></g>
+<path d="M60 308H22V98H58" fill="none" stroke="#4a78b5" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#pg2)"/>
+<text x="175" y="358" text-anchor="middle" font-size="12" fill="var(--ink)">Repeat to improve the policy</text></svg>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 1: Basic working of a policy gradient method</figcaption></figure>
+<h3 id="pgt">The policy gradient theorem</h3>
+<div class="def"><span class="lab">Definition.</span> The policy gradient theorem provides a mathematical expression for calculating how the expected return changes with respect to the policy parameters.
+<p style="margin-top:12px">The objective is to maximize</p>
+$$J(\theta)=\mathbb E_{\pi_\theta}\left[\sum_{t=0}^{T-1}\gamma^tR_{t+1}\right]$$
+where \(T\) is the episode length, \(\gamma\) is the discount factor and \(J(\theta)\) is the expected return.</div>
+<p>A common policy gradient expression is</p>
+<div class="def">$$\nabla_\theta J(\theta)\propto\sum_s d^{\pi_\theta}(s)\sum_a Q^{\pi_\theta}(s,a)\nabla_\theta\pi_\theta(a\mid s)$$
+where \(d^{\pi_\theta}(s)\) represents the appropriate state visitation weighting for the objective.</div>
+<p>For Monte Carlo policy gradient estimation, a sampled-trajectory form is</p>
+<div class="def">$$\hat g=\sum_{t=0}^{T-1}\gamma^tG_t\nabla_\theta\log\pi_\theta(A_t\mid S_t)$$
+where
+$$G_t=\sum_{k=t}^{T-1}\gamma^{k-t}R_{k+1}$$</div>
+<p>For the discounted start-state objective shown above, the \(\gamma^t\) factor is included in this estimator.</p>
+<h4>Policy parameter update</h4>
+<p>Policy gradient methods use gradient ascent:</p>
+<div class="def">$$\theta_{\text{new}}=\theta_{\text{old}}+\alpha\nabla_\theta J(\theta)$$
+Where:
+<ul><li>\(\alpha\): learning rate.</li><li>\(\theta\): policy parameters.</li><li>\(\nabla_\theta J(\theta)\): gradient of expected return.</li></ul></div>
+<p class="note">Gradient ascent is used because the objective is to maximize rewards, rather than minimize a prediction error.</p>
+<h3 id="rf">REINFORCE: Monte Carlo policy gradient</h3>
+<div class="def"><span class="lab">Definition.</span> REINFORCE is an on-policy Monte Carlo policy gradient algorithm that updates policy parameters using the returns obtained from complete episodes.</div>
+<p>It directly improves a stochastic policy by increasing the probabilities of actions associated with favorable returns.</p>
+<h4>Key characteristics</h4>
+<ol class="s"><li>Model-free and on-policy.</li><li>Directly optimizes the policy.</li><li>Uses complete episode returns.</li><li>Applies stochastic gradient ascent.</li><li>Does not require a value-function approximator in its basic form.</li></ol>
+<h4>REINFORCE update rule</h4>
+<p>Using an episode-based Monte Carlo policy gradient estimate:</p>
+<div class="def">$$\theta\leftarrow\theta+\alpha\sum_{t=0}^{T-1}\gamma^tG_t\nabla_\theta\log\pi_\theta(A_t\mid S_t)$$</div>
+<h4>REINFORCE algorithm</h4>
+<ol class="s"><li>Initialize the policy parameters \(\theta\).</li><li>Generate an episode by following \(\pi_\theta\).</li><li>Record states, actions and rewards.</li><li>Calculate the discounted return \(G_t\) for each time step.</li><li>Calculate the policy gradient estimate.</li><li>Update the policy parameters using gradient ascent.</li><li>Repeat over many episodes.</li></ol>
+<h4>Advantages of REINFORCE</h4>
+<ul><li>Simple and directly optimizes a policy.</li><li>Can handle stochastic policies.</li><li>Does not require an environment model.</li><li>Supports continuous-action policies.</li></ul>
+<h4>Limitations</h4>
+<ul><li>Requires complete episodes.</li><li>Gradient estimates can have high variance.</li><li>May require many episodes to learn effectively.</li><li>Learning can be slow when rewards are sparse or delayed.</li></ul>
+<h3 id="rfb">REINFORCE with baseline</h3>
+<div class="def"><span class="lab">Definition.</span> REINFORCE with baseline is an improvement to the basic REINFORCE algorithm that subtracts a baseline from the observed return to reduce the variance of policy gradient estimates. The baseline is commonly the estimated state-value function \(V(s)\).</div>
+<h4>Why is a baseline needed?</h4>
+<p>In ordinary REINFORCE, returns can vary significantly between episodes, causing noisy policy updates. A baseline provides a reference value for comparing how good the observed return is.</p>
+<p>The difference between the observed return and baseline is</p>
+<div class="def">$$\hat A_t=G_t-b(S_t)$$
+When \(b(S_t)=V(S_t)\),
+$$\hat A_t=G_t-V(S_t)$$
+This is a sampled advantage estimate.</div>
+<div class="example"><p class="example-label">Example</p>
+<p>Suppose the expected return from a state is 10.</p>
+<div class="scroll"><table><thead><tr><th>Observed return<th>Baseline<th>Advantage estimate</tr></thead><tbody>
+<tr><td>15<td>10<td>+5</tr><tr><td>10<td>10<td>0</tr><tr><td>7<td>10<td>−3</tr></tbody></table></div>
+<p>A positive advantage indicates that the observed outcome was better than the baseline. A negative advantage indicates that it was worse.</p></div>
+<h4>REINFORCE with baseline update rule</h4>
+<div class="def">$$\theta\leftarrow\theta+\alpha\sum_{t=0}^{T-1}\gamma^t\left[G_t-b(S_t)\right]\nabla_\theta\log\pi_\theta(A_t\mid S_t)$$</div>
+<h4>Advantages</h4>
+<ol class="s"><li>Reduces variance when a suitable baseline is used.</li><li>Can produce more consistent policy updates.</li><li>May improve learning efficiency.</li><li>Helps distinguish better-than-expected and worse-than-expected outcomes.</li></ol>
+<p class="note"><b>Important:</b> an action-independent baseline does not introduce bias into the expected policy gradient merely because the baseline is estimated. The baseline must not depend on the sampled action for the usual unbiasedness result.</p>
+<h3 id="ac">Actor–critic methods</h3>
+<div class="def"><span class="lab">Definition.</span> Actor–critic methods are reinforcement learning algorithms that combine policy gradient learning with value-function estimation.</div>
+<p>They contain two main components:</p>
+<ul><li><b>Actor:</b> learns the policy and selects actions.</li><li><b>Critic:</b> estimates value functions and provides feedback to the actor.</li></ul>
+<figure style="margin:24px 0"><svg viewBox="0 0 400 290" role="img" aria-label="Actor-critic architecture: state S_t feeds the actor and the critic; the actor acts on the environment, the environment returns reward and next state to the critic, and the critic sends feedback to the actor" style="width:100%;max-width:30rem;display:block;margin:0 auto;font-family:Newsreader,Georgia,serif">
+<defs><marker id="ac1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1c1a16"/></marker><marker id="ac2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8a62b8"/></marker></defs>
+<rect x="140" y="8" width="120" height="36" rx="8" fill="#dce9f9" stroke="#4a78b5" stroke-width="1.4"/><text x="200" y="31" text-anchor="middle" font-size="14" font-weight="bold" fill="#1d3f6e">State Sₜ</text>
+<rect x="20" y="86" width="140" height="60" rx="8" fill="#dce9f9" stroke="#4a78b5" stroke-width="1.4"/><text x="90" y="112" text-anchor="middle" font-size="15" font-weight="bold" fill="#1d3f6e">Actor</text><text x="90" y="132" text-anchor="middle" font-size="12" fill="#1d3f6e">Policy π_θ(a | s)</text>
+<rect x="240" y="86" width="140" height="60" rx="8" fill="#e8dcf4" stroke="#8a62b8" stroke-width="1.4"/><text x="310" y="112" text-anchor="middle" font-size="15" font-weight="bold" fill="#4a2a73">Critic</text><text x="310" y="132" text-anchor="middle" font-size="12" fill="#4a2a73">Value V(s)</text>
+<rect x="40" y="190" width="150" height="50" rx="8" fill="#d9f0e1" stroke="#3f9a62" stroke-width="1.4"/><text x="115" y="212" text-anchor="middle" font-size="14" font-weight="bold" fill="#1d5a36">Environment</text><text x="115" y="230" text-anchor="middle" font-size="11" fill="#1d5a36">Reward and next state</text>
+<g stroke="#1c1a16" stroke-width="1.6" fill="none"><path d="M200 44V62M90 86V62H310V86"/><path d="M90 146V188" marker-end="url(#ac1)"/><path d="M190 215H310V148" marker-end="url(#ac1)"/></g>
+<path d="M240 116H162" stroke="#8a62b8" stroke-width="1.6" stroke-dasharray="5 4" fill="none" marker-end="url(#ac2)"/>
+<text x="200" y="139" text-anchor="middle" font-size="11" fill="#8a62b8">Feedback</text>
+<text x="200" y="274" text-anchor="middle" font-size="12" fill="var(--ink)">Actor improves actions using the critic’s evaluation</text></svg>
+<figcaption style="text-align:center;color:var(--mut);font-size:.95rem;margin-top:6px">Figure 2: Simplified Actor–Critic architecture</figcaption></figure>
+<h4>Working of actor–critic</h4>
+<ol class="s"><li>The actor observes the current state.</li><li>It selects an action using its policy.</li><li>The environment provides a reward and next state.</li><li>The critic evaluates the outcome using a value function.</li><li>The critic calculates an error or advantage estimate.</li><li>The actor improves its policy using this feedback.</li><li>The process repeats.</li></ol>
+<h4>Critic update</h4>
+<p>In a simple one-step actor–critic algorithm, the critic calculates the TD error:</p>
+<div class="def">$$\delta_t=R_{t+1}+\gamma V_\mathbf{w}(S_{t+1})-V_\mathbf{w}(S_t)$$</div>
+<p>The critic updates its parameters using a semi-gradient TD rule:</p>
+<div class="def">$$\mathbf w\leftarrow\mathbf w+\alpha_c\delta_t\nabla_\mathbf w V_\mathbf w(S_t)$$</div>
+<h4>Actor update</h4>
+<p>The actor uses the critic's TD error as an advantage estimate.</p>
+<div class="def">$$\theta\leftarrow\theta+\alpha_a\delta_t\nabla_\theta\log\pi_\theta(A_t\mid S_t)$$
+Here:
+<ul><li>\(\alpha_a\): actor learning rate.</li><li>\(\alpha_c\): critic learning rate.</li><li>\(\delta_t\): TD error, used as feedback.</li><li>\(\theta\): actor policy parameters.</li><li>\(\mathbf w\): critic value-function parameters.</li></ul></div>
+<p class="note">These are common one-step actor–critic updates; other actor–critic algorithms use different return and advantage estimators.</p>
+<h4>Advantages and disadvantages of actor–critic methods</h4>
+<div class="scroll"><table><thead><tr><th>Advantages<th>Disadvantages</tr></thead><tbody>
+<tr><td>Combines direct policy optimization with value estimation<td>More complex than basic REINFORCE</tr>
+<tr><td>Critic can reduce variance in policy updates<td>Requires training both actor and critic</tr>
+<tr><td>Can update after individual transitions<td>Critic estimation errors can affect actor learning</tr>
+<tr><td>Supports continuous-action policies<td>Sensitive to learning rates and hyperparameters</tr>
+<tr><td>Can improve learning efficiency<td>Does not guarantee stable or optimal learning</tr></tbody></table></div>
+<h4>Examples of actor–critic algorithms</h4>
+<ul><li><b>A2C:</b> Advantage Actor–Critic, which uses advantage estimates to improve the actor.</li><li><b>A3C:</b> Asynchronous Advantage Actor–Critic, which uses multiple parallel workers.</li><li><b>DDPG:</b> Deep Deterministic Policy Gradient, developed for continuous control.</li><li><b>PPO:</b> Proximal Policy Optimization, commonly implemented using an actor–critic architecture and a clipped policy-update objective.</li></ul>
+<h3 id="pgcmp">Comparison of policy gradient algorithms</h3>
+<div class="scroll"><table><thead><tr><th>Feature<th>REINFORCE<th>REINFORCE with baseline<th>Actor–critic</tr></thead><tbody>
+<tr><td>Policy optimization<td>Direct<td>Direct<td>Direct</tr>
+<tr><td>Uses value function<td>Not required<td>Often used as baseline<td>Yes, through critic</tr>
+<tr><td>Return estimation<td>Monte Carlo<td>Monte Carlo<td>Often TD or multi-step</tr>
+<tr><td>Updates<td>After complete episodes<td>After complete episodes<td>Can update during episodes</tr>
+<tr><td>Gradient variance<td>Often high<td>Can be reduced<td>Can be reduced</tr>
+<tr><td>Complexity<td>Low<td>Moderate<td>Higher</tr></tbody></table></div>
+<h3>Conclusion</h3>
+<p>Policy gradient methods directly optimize a parameterized policy to maximize expected cumulative rewards.</p>
+<p>Policy approximation makes it possible to learn action-selection strategies in large or continuous environments. The policy gradient theorem provides the mathematical foundation for adjusting policy parameters.</p>
+<p>REINFORCE uses complete episode returns, REINFORCE with baseline reduces gradient variance using a reference value, and actor–critic methods combine policy learning with value-function estimation.</p>
+<div class="def"><span class="lab">Key points for examinations.</span><ul><li>Policy gradient methods optimize the policy directly.</li><li>REINFORCE uses Monte Carlo returns.</li><li>A baseline reduces gradient variance.</li><li>Actor–critic methods use an actor to select actions and a critic to evaluate them.</li></ul></div></section>
+
+<section id="s4"><span class="num">4</span><h2>Summary</h2>
+<div class="scroll"><table><thead><tr><th>Topic<th>Purpose<th>Key idea</tr></thead><tbody>
+<tr><td>Value-function approximation<td>Prediction<td>\(\hat V(s,\boldsymbol\theta)\approx V^\pi(s)\) with a parameterized function</tr>
+<tr><td>Prediction objective<td>Prediction<td>Minimize \(\sum_s\mu(s)[V^\pi(s)-\hat V(s,\boldsymbol\theta)]^2\)</tr>
+<tr><td>Stochastic-gradient / semi-gradient TD(0)<td>Prediction<td>\(\boldsymbol\theta\leftarrow\boldsymbol\theta+\alpha\delta_t\nabla\hat V(S_t,\boldsymbol\theta)\)</tr>
+<tr><td>Linear methods<td>Prediction<td>\(\hat V(s,\mathbf w)=\mathbf w^T\boldsymbol\phi(s)\), gradient is \(\boldsymbol\phi(s)\)</tr>
+<tr><td>Eligibility trace<td>Credit assignment<td>\(e_t(s)=\gamma\lambda e_{t-1}(s)+\mathbb I(S_t=s)\)</tr>
+<tr><td>λ-return<td>Target<td>Weighted average of n-step returns; λ = 0 is TD(0), λ = 1 is Monte Carlo</tr>
+<tr><td>TD(λ)<td>Prediction<td>\(V(s)\leftarrow V(s)+\alpha\delta_te_t(s)\) for all states</tr>
+<tr><td>Truncated TD(λ)<td>Prediction<td>λ-return cut off at horizon \(n\), usable online</tr>
+<tr><td>Sarsa(λ)<td>Control<td>On-policy, traces over state-action pairs</tr>
+<tr><td>Policy gradient theorem<td>Control<td>\(\nabla J\propto\sum_s d(s)\sum_aQ(s,a)\nabla\pi(a\mid s)\)</tr>
+<tr><td>REINFORCE<td>Control<td>Monte Carlo returns, gradient ascent on log-probabilities</tr>
+<tr><td>REINFORCE with baseline<td>Control<td>Uses \(G_t-b(S_t)\) to reduce variance</tr>
+<tr><td>Actor–critic<td>Control<td>Actor chooses actions, critic supplies the TD error</tr></tbody></table></div>
+<div class="def"><span class="lab">Exam points.</span>
+<ul><li>Function approximation replaces the value table with parameters, so values generalize to unseen states.</li><li>The prediction objective weights squared error by \(\mu(s)\), the state distribution under the policy.</li><li>TD with function approximation is a semi-gradient method, because the bootstrapped target is treated as fixed.</li><li>The decay factor of an eligibility trace is \(\gamma\lambda\), not \(\lambda\) alone.</li><li>λ = 0 gives one-step TD and λ = 1 relates to Monte Carlo learning.</li><li>Sarsa(λ) updates every state-action pair in proportion to its trace.</li><li>Policy gradient methods use gradient ascent on expected return; a baseline reduces variance without adding bias.</li><li>Actor–critic combines a policy (actor) with a value estimate (critic).</li></ul></div>
+<h3>Conclusion</h3>
+<p>Function approximation lets reinforcement learning scale to large and continuous problems by learning the parameters of a function instead of a table. Eligibility traces and the λ-return connect one-step TD and Monte Carlo learning, spreading credit across earlier states and actions. Policy gradient methods optimize a parameterized policy directly, and actor–critic methods combine this with value estimation for lower-variance learning.</p></section>
+
+<section id="check"><span class="num">5</span><h2>Self-check</h2>
+<details><summary>Why is function approximation needed?</summary><p>Tabular methods cannot store a separate value for every state when the state space is very large or continuous. A parameterized function uses far less memory and generalizes to states not yet visited.</p></details>
+<details><summary>What is the semi-gradient TD(0) update?</summary><p>\(\boldsymbol\theta_{t+1}=\boldsymbol\theta_t+\alpha\delta_t\nabla\hat V(S_t,\boldsymbol\theta_t)\), where \(\delta_t=R_{t+1}+\gamma\hat V(S_{t+1},\boldsymbol\theta_t)-\hat V(S_t,\boldsymbol\theta_t)\). It is called semi-gradient because the bootstrapped target is treated as fixed when taking the gradient.</p></details>
+<details><summary>What is the gradient of a linear value function?</summary><p>For \(\hat V(s,\mathbf w)=\mathbf w^T\boldsymbol\phi(s)\), the gradient with respect to \(\mathbf w\) is the feature vector \(\boldsymbol\phi(s)\), so the update becomes \(\mathbf w\leftarrow\mathbf w+\alpha\delta_t\boldsymbol\phi(S_t)\).</p></details>
+<details><summary>What does an eligibility trace record, and how does it decay?</summary><p>It records how recently and how often a state or state-action pair was visited. It increases by 1 on a visit and otherwise decays by the factor \(\gamma\lambda\) each step.</p></details>
+<details><summary>What do λ = 0 and λ = 1 correspond to?</summary><p>λ = 0 gives the one-step TD(0) update. λ = 1 corresponds to the Monte Carlo return in episodic tasks, with the trace decaying only through \(\gamma\).</p></details>
+<details><summary>How does truncated TD(λ) differ from the λ-return?</summary><p>The λ-return needs the whole episode. The truncated version stops at a horizon \(n\), so an update can be made after \(n\) steps and only recent experience is stored.</p></details>
+<details><summary>How does Sarsa(λ) differ from SARSA?</summary><p>SARSA updates only the current state-action pair. Sarsa(λ) keeps traces for all state-action pairs and updates each in proportion to its trace using the same TD error.</p></details>
+<details><summary>Why do policy gradient methods use gradient ascent?</summary><p>The objective \(J(\theta)\) is expected return, which is to be maximized, rather than an error to be minimized.</p></details>
+<details><summary>Why does a baseline help REINFORCE, and why does it not add bias?</summary><p>Subtracting \(b(S_t)\) reduces the variance of the gradient estimate. If the baseline does not depend on the sampled action, the expected gradient is unchanged.</p></details>
+<details><summary>What are the roles of the actor and the critic?</summary><p>The actor holds the policy and selects actions. The critic estimates values and supplies the TD error, which the actor uses as feedback to update its parameters.</p></details></section>
+<nav class="pager" aria-label="Previous module"><a href="https://leenasilvoster.github.io/Reinforcement_Learning/Module_4.html"><small>Previous module</small><span>← Module 4</span></a></nav>
+</main>
+<footer><span>CST497 — Reinforcement Learning · Module 5</span><span><a href="https://leenasilvoster.github.io/Reinforcement_Learning/Module_4.html">← Module 4</a></span></footer>
+</div>
+<script>
+const ls=[...document.querySelectorAll('.toc a')];
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)ls.forEach(a=>a.classList.toggle('on',a.hash==='#'+e.target.id))}),{rootMargin:'-15% 0px -75% 0px'});
+document.querySelectorAll('section[id]').forEach(s=>io.observe(s));
+var tg=document.getElementById('tg'),tb=document.getElementById('tb');tg.addEventListener('click',function(){var o=tb.classList.toggle('open');tg.setAttribute('aria-expanded',o?'true':'false')});
+</script>
+</body>
+</html>
